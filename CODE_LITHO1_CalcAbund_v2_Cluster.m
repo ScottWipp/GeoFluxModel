@@ -104,13 +104,14 @@ Abundance + GeoFlux:
 
 %% 1) ---- LOAD DATA FROM LITHO 1.0 ----
 
-bin_size = [100, 75, 50, 25, 1];
+bin_size = [100, 75, 50];
 
 
-for test = 1%1:length(bin_size)
+for test = 1:length(bin_size)
 
 
-close all; tic; clearvars -except test_iter bin_size test
+%close all; 
+tic; clearvars -except test_iter bin_size test
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 
@@ -184,7 +185,7 @@ close all; tic; clearvars -except test_iter bin_size test
     
     
     
-    
+    MASTER.detector = det; 
     
     
     
@@ -576,11 +577,13 @@ clear n x i
     weak                = asind(sqrt(0.23122));                     %(degree) weak mixing angle from Canas et al. 2016 Physics Letter B
     
     
+    
+    
 % -- Calculate Oscillation probability constants -- (these don't involve
     % distance or energy so we calculate now)
-    simple2.pee.p1 = cosd(the13).^4 .* sind(2.*the12).^2;
-    simple2.pee.p2 = sind(2*the13).^2 .* cosd(2.*the12).^2;
-    simple2.pee.p3 = sind(2*the13).^2;
+    simple2.pee.p1 = cosd(the13(1)).^4 .* sind(2.*the12(1)).^2;
+    simple2.pee.p2 = sind(2*the13(1)).^2 .* cosd(2.*the12(1)).^2;
+    simple2.pee.p3 = sind(2*the13(1)).^2;
 
 
 % -- Define isotope parameters -- 
@@ -1210,54 +1213,42 @@ LM.total.hp.K = stat(LM_cc_sums(:,9),method);
 LM.total.mass = stat(LM_cc_sums(:,1),method); 
 
 %% 9) ---- Finish Geo-flux calculation to get TNU ---- 
- clear test
+ %clear test
 TNU.U = 7.67*10^4; %conversion of nu/s/cm2 to TNU
 TNU.Th = 2.48*10^5;
 
 iso = simple2.iso; 
 eno = simple2.eno;
 
-% Calculate remainder of flux equation (including conv. of m2 to cm2)
-TNU.U238 = sum(eno.U238) * iso.avgd * iso.dc.U238 /iso.amu.U238/10^4/TNU.U; %(/s/kg) 
-TNU.Th232 = sum(eno.Th232) * iso.avgd * iso.dc.Th232 /iso.amu.Th232/10^4/TNU.Th; %(/s/kg) Remainder of flux equation 
+y = UC_cc_flux_sums(:,1:length(simple2.energy)); %1 row sums to ~680 (sums to 18 after multiplication of eno)
+x = UC_cc_flux_sums(:,length(simple2.energy)+1:end); 
 
-y = UC_cc_flux_sums(:,1:14);
-x1 = eno.U238 * iso.avgd * iso.dc.U238/ iso.amu.U238/10^4; 
-x2 = 0.1*10^32 * 3.154*10^7 * 0.842 * 1*10^-47; % #protons * #s/yr * efficiency * cross-sec (m2)
-
-x3 = eno.U238 * sum(eno.U238) * iso.dc.U238 / 10^-4 / TNU.U; 
-
-test.old = stat(sum(y.*TNU.U238,2)); 
-test.new = stat(sum(y.*x1'*x2,2)); 
-
-test.new2 = stat(sum(y.*x3',2)); 
+t.fluxU = y * 1/(238.1*1.661*10^-27) .* eno.U238' /sum(eno.U238) * 6 * iso.dc.U238 /10^4; % nu/cm2/s
+t.fluxTh = x * 1/(232.1*1.661*10^-27) .* eno.Th232' /sum(eno.Th232)* 6 * iso.dc.Th232 /10^4; % nu/cm2/s
 
 
-% -- Write out the units --
+t.tnuU = t.fluxU./TNU.U; 
+t.tnuTh = t.fluxTh./TNU.Th; 
+
+z(1) = median(sum(t.tnuU,2));
+z(2) = median(sum(t.tnuTh,2));
+z
+clear z 
 %{
-Flux from Huang13 = nu/m2/kg 
-From x1 =      /s/kg
+% testing 
+y = sort(y); 
+sum(y(50,:).*eno.U238');
+x = sort(t.fluxU); 
+sum(x(50,:));
 
 
-result = nu/s/m2 (need to convert to cm2)
-result = nu/s/cm2
-
-
+figure
+histogram(sum(t.tnuU)); 
+title(sprintf('Bin Size %d KeV',bin_size(test)))
 %}
-
-%test.new2 = (x.*z')*(iso.avgd * iso.dc.U238 /iso.amu.U238/10^4/TNU.U); 
-
-
-%test.stat.old = stat(sum(test.old,2)); 
-%test.stat.new = stat(sum(test.new,2)); 
-
-
-
+end
 return
 
-
-
-clear iso eno
 
 %% 10) ---- Reallocate individual cell data into respective structures -- 
     %{
@@ -1593,7 +1584,7 @@ results(test,2:4) = huang.tab2.total(end,:);
 save Results_TestingEnergyBins.mat results
 fprintf('Energy Bin Size: %.1f  ||  Time Elapsed: %.1f min \n',bin_size(test),toc/60)
 
-end
+
 
 
 
