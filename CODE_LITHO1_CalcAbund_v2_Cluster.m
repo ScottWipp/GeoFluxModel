@@ -104,10 +104,7 @@ Abundance + GeoFlux:
 
 %% 1) ---- LOAD DATA FROM LITHO 1.0 ----
 
-bin_size = [100, 75, 50];
-
-
-for test = 1:length(bin_size)
+fprintf('    Starting time = %s \n',datestr(now,'mmmm dd, yyyy HH:MM AM')) %print time of loop start
 
 
 %close all; 
@@ -179,7 +176,7 @@ tic; clearvars -except test_iter bin_size test
 
 
 
-    iter = 100;  
+    iter = 20000;  
     simple2.meth = 1; 
     det = detectors('Borexino',:); 
     
@@ -230,7 +227,7 @@ tic; clearvars -except test_iter bin_size test
                    
 % - Define energies we will calculate flux at -
     % this has to be here so we can pre-define variables
-    E_int = bin_size(test); %(keV)
+    E_int = 100; %(keV)
     simple2.energy(:,1) = 1806+E_int/2:E_int:3276-E_int/2; %(keV) 3272 = max but this is easier
     MASTER.energy.bin = simple2.energy; 
     MASTER.energy.binsize = '100 KeV';
@@ -596,11 +593,12 @@ clear n x i
     simple2.iso.molar.Th232 = 1.00; 
     simple2.iso.molar.K40   = 0.000117; % mass ratio = 0.000112
 
-    % - Isotope Mass - (amu or kg/mole)
-    simple2.iso.amu.U238  = 238.0507826/1000; 
-    simple2.iso.amu.U235  = 235.0439231/1000;
-    simple2.iso.amu.Th232 = 232.0380504/1000; 
-    simple2.iso.amu.K40   = 39.9639987/1000; 
+    % - Isotope Mass - (amu)
+    simple2.iso.amu.U238  = 238.0507826; 
+    simple2.iso.amu.U235  = 235.0439231;
+    simple2.iso.amu.Th232 = 232.0380504; 
+    simple2.iso.amu.K40   = 39.9639987; 
+    simple2.iso.amu.amuKg = 1.660539040*10^-27;
 
     % - Avogadros Number - (atom/mole)
     simple2.iso.avgd = 6.022140857*10^23; % http://physics.nist.gov/cgi-bin/cuu/Value?na    
@@ -920,7 +918,7 @@ end % 1:64800
 
 
 
-parfor n = 17114%1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
+parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
 
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
@@ -1213,7 +1211,21 @@ LM.total.hp.K = stat(LM_cc_sums(:,9),method);
 LM.total.mass = stat(LM_cc_sums(:,1),method); 
 
 %% 9) ---- Finish Geo-flux calculation to get TNU ---- 
+
+iso = simple2.iso; 
+eno = simple2.eno;
+
+TNU.U238 = 1/(iso.amu.U238*iso.amu.amuKg) .*eno.U238' /sum(eno.U238)...
+    *6 * iso.dc.U238 /10^4 /(7.67*10^4); % nu/cm2/s
+
+TNU.Th232 = 1/(iso.amu.Th232*iso.amu.amuKg) .* eno.Th232' /sum(eno.Th232)...
+    *4 * iso.dc.Th232 /10^4 /(2.48*10^5); % nu/cm2/s
+
+
+
+
  %clear test
+ %{
 TNU.U = 7.67*10^4; %conversion of nu/s/cm2 to TNU
 TNU.Th = 2.48*10^5;
 
@@ -1223,8 +1235,8 @@ eno = simple2.eno;
 y = UC_cc_flux_sums(:,1:length(simple2.energy)); %1 row sums to ~680 (sums to 18 after multiplication of eno)
 x = UC_cc_flux_sums(:,length(simple2.energy)+1:end); 
 
-t.fluxU = y * 1/(238.1*1.661*10^-27) .* eno.U238' /sum(eno.U238) * 6 * iso.dc.U238 /10^4; % nu/cm2/s
-t.fluxTh = x * 1/(232.1*1.661*10^-27) .* eno.Th232' /sum(eno.Th232)* 6 * iso.dc.Th232 /10^4; % nu/cm2/s
+t.fluxU = y * 1/(simple2.iso.amu.U238*1.660539*10^-27) .* eno.U238' /sum(eno.U238) * 6 * iso.dc.U238 /10^4; % nu/cm2/s
+t.fluxTh = x * 1/(simple2.iso.amu.Th232*1.660539*10^-27) .* eno.Th232' /sum(eno.Th232)* 6 * iso.dc.Th232 /10^4; % nu/cm2/s
 
 
 t.tnuU = t.fluxU./TNU.U; 
@@ -1232,7 +1244,7 @@ t.tnuTh = t.fluxTh./TNU.Th;
 
 z(1) = median(sum(t.tnuU,2));
 z(2) = median(sum(t.tnuTh,2));
-z
+z;
 clear z 
 %{
 % testing 
@@ -1246,8 +1258,9 @@ figure
 histogram(sum(t.tnuU)); 
 title(sprintf('Bin Size %d KeV',bin_size(test)))
 %}
-end
-return
+ %}
+ 
+
 
 
 %% 10) ---- Reallocate individual cell data into respective structures -- 
@@ -1272,7 +1285,7 @@ Note: This would preferrably be done directly in loop, but parfor is
 %}
 
 %fprintf('Re-organizing Data...')
-
+%{
 % Mass of U, Th, K, and cell ('mass')(kg)
     n = {'U';'Th';'K';'mass'};% these need to be the same as "UC_out"
     % Note: putting 'mass.U' in "n" doesn't work.
@@ -1347,7 +1360,7 @@ Note: This would preferrably be done directly in loop, but parfor is
     end  
     
     
-
+%}
 
 %% 11) ---- Reproduce Huang et al. 2013 Table 2 (flux) ---
 %{
@@ -1359,7 +1372,7 @@ uncertainty for each reservoir.
 method = 4; % 4 = median +- 68% c.l., 6 = geometric mean +- std
 
 U238 = 1:length(simple2.energy); %1:16
-Th232 = length(simple2.energy):length(simple2.energy)*2; %1:32
+Th232 = length(simple2.energy)+1:length(simple2.energy)*2; %1:32
 
 % Row Names
 huang.tab2.rows = {'Sed_cc';'UC';'MC';'LC';'LM';'Sed_oc';'OC';'Bulk CC';'Bulk Crust';'Bulk Litho'};
@@ -1367,12 +1380,12 @@ huang.tab2.rows = {'Sed_cc';'UC';'MC';'LC';'LM';'Sed_oc';'OC';'Bulk CC';'Bulk Cr
 
 % Sediment (TNU)
 crust = s1_cc_flux_sums + s2_cc_flux_sums + s3_cc_flux_sums; 
-flux.sed.sums.cc.U238 = sum(crust(:,U238),2).*TNU.U238; 
-flux.sed.sums.cc.Th232 = sum(crust(:,Th232),2).*TNU.Th232; 
+flux.sed.sums.cc.U238 = sum(crust(:,U238).*TNU.U238,2); 
+flux.sed.sums.cc.Th232 = sum(crust(:,Th232).*TNU.Th232,2); 
 
 ocean = s1_oc_flux_sums + s2_oc_flux_sums + s3_oc_flux_sums; 
-flux.sed.sums.oc.U238 = sum(ocean(:,U238),2).*TNU.U238; 
-flux.sed.sums.oc.Th232 = sum(ocean(:,Th232),2).*TNU.Th232; 
+flux.sed.sums.oc.U238 = sum(ocean(:,U238).*TNU.U238,2); 
+flux.sed.sums.oc.Th232 = sum(ocean(:,Th232).*TNU.Th232,2); 
 
 huang.tab2.U238(1,:) = stat(flux.sed.sums.cc.U238,method); 
 huang.tab2.Th232(1,:) = stat(flux.sed.sums.cc.Th232,method); 
@@ -1385,11 +1398,11 @@ huang.tab2.total(6,:) = stat(flux.sed.sums.oc.U238+flux.sed.sums.oc.Th232,method
 
 
 % UC (TNU)
-flux.UC.sums.cc.U238 = sum(UC_cc_flux_sums(:,U238),2).*TNU.U238; 
-flux.UC.sums.cc.Th232 = sum(UC_cc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.UC.sums.cc.U238 = sum(UC_cc_flux_sums(:,U238).*TNU.U238,2); 
+flux.UC.sums.cc.Th232 = sum(UC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
 
-flux.UC.sums.oc.U238 = sum(UC_oc_flux_sums(:,U238),2).*TNU.U238; 
-flux.UC.sums.oc.Th232 = sum(UC_oc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.UC.sums.oc.U238 = sum(UC_oc_flux_sums(:,U238).*TNU.U238,2); 
+flux.UC.sums.oc.Th232 = sum(UC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
 
 huang.tab2.U238(2,:) = stat(flux.UC.sums.cc.U238,method); 
 huang.tab2.Th232(2,:) = stat(flux.UC.sums.cc.Th232,method); 
@@ -1397,11 +1410,11 @@ huang.tab2.total(2,:) = stat(flux.UC.sums.cc.U238+flux.UC.sums.cc.Th232,method);
 
 
 % MC (TNU)
-flux.MC.sums.cc.U238 = sum(MC_cc_flux_sums(:,U238),2).*TNU.U238; 
-flux.MC.sums.cc.Th232 = sum(MC_cc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.MC.sums.cc.U238 = sum(MC_cc_flux_sums(:,U238).*TNU.U238,2); 
+flux.MC.sums.cc.Th232 = sum(MC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
 
-flux.MC.sums.oc.U238 = sum(MC_oc_flux_sums(:,U238),2).*TNU.U238; 
-flux.MC.sums.oc.Th232 = sum(MC_oc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.MC.sums.oc.U238 = sum(MC_oc_flux_sums(:,U238).*TNU.U238,2); 
+flux.MC.sums.oc.Th232 = sum(MC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
 
 huang.tab2.U238(3,:) = stat(flux.MC.sums.cc.U238,method); 
 huang.tab2.Th232(3,:) = stat(flux.MC.sums.cc.Th232,method); 
@@ -1409,11 +1422,11 @@ huang.tab2.total(3,:) = stat(flux.MC.sums.cc.U238+flux.MC.sums.cc.Th232,method);
 
 
 % LC (TNU)
-flux.LC.sums.cc.U238 = sum(LC_cc_flux_sums(:,U238),2).*TNU.U238; 
-flux.LC.sums.cc.Th232 = sum(LC_cc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.LC.sums.cc.U238 = sum(LC_cc_flux_sums(:,U238).*TNU.U238,2); 
+flux.LC.sums.cc.Th232 = sum(LC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
 
-flux.LC.sums.oc.U238 = sum(LC_oc_flux_sums(:,U238),2).*TNU.U238; 
-flux.LC.sums.oc.Th232 = sum(LC_oc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.LC.sums.oc.U238 = sum(LC_oc_flux_sums(:,U238).*TNU.U238,2); 
+flux.LC.sums.oc.Th232 = sum(LC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
 
 huang.tab2.U238(4,:) = stat(flux.LC.sums.cc.U238,method); 
 huang.tab2.Th232(4,:) = stat(flux.LC.sums.cc.Th232,method); 
@@ -1421,11 +1434,11 @@ huang.tab2.total(4,:) = stat(flux.LC.sums.cc.U238+flux.LC.sums.cc.Th232,method);
 
 
 % LM (TNU)
-flux.LM.sums.cc.U238 = sum(LM_cc_flux_sums(:,U238),2).*TNU.U238; 
-flux.LM.sums.cc.Th232 = sum(LM_cc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.LM.sums.cc.U238 = sum(LM_cc_flux_sums(:,U238).*TNU.U238,2); 
+flux.LM.sums.cc.Th232 = sum(LM_cc_flux_sums(:,Th232).*TNU.Th232,2); 
 
-flux.LM.sums.oc.U238 = sum(LM_oc_flux_sums(:,U238),2).*TNU.U238; 
-flux.LM.sums.oc.Th232 = sum(LM_oc_flux_sums(:,Th232),2).*TNU.Th232; 
+flux.LM.sums.oc.U238 = sum(LM_oc_flux_sums(:,U238).*TNU.U238,2); 
+flux.LM.sums.oc.Th232 = sum(LM_oc_flux_sums(:,Th232).*TNU.Th232,2); 
 
 huang.tab2.U238(5,:) = stat(flux.LM.sums.cc.U238,method); 
 huang.tab2.Th232(5,:) = stat(flux.LM.sums.cc.Th232,method); 
@@ -1577,7 +1590,7 @@ huang.tab3.table = horzcat(huang.tab3.rho, huang.tab3.thick, huang.tab3.mass.mas
 
 
 %% Save Testing Data
-
+return
 load Results_TestingEnergyBins.mat 
 results(test,1) = bin_size(test); 
 results(test,2:4) = huang.tab2.total(end,:); 
