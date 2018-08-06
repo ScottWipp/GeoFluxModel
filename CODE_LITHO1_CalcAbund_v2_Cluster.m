@@ -103,12 +103,12 @@ Abundance + GeoFlux:
 %}
 
 %% 1) ---- LOAD DATA FROM LITHO 1.0 ----
-
+for all_det = 1:1
 fprintf('    Starting time = %s \n',datestr(now,'mmmm dd, yyyy HH:MM AM')) %print time of loop start
 
 
 %close all; 
-tic; clearvars -except test_iter bin_size test
+tic; clearvars -except all_det
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 
@@ -171,16 +171,17 @@ tic; clearvars -except test_iter bin_size test
 
 
 
+% loop through detectors by detectors(i,:), which pulls entire row
 
 
 
 
-
-    iter = 20000;  
+    iter = 1000;  
     simple2.meth = 1; 
-    det = detectors('Borexino',:); 
-    
-    
+    %det = detectors('Borexino',:); 
+    det = detectors(all_det,:); 
+    %det = 0;
+    %abundance = 1; % 1 = don't calculate abundance again
     
     MASTER.detector = det; 
     
@@ -240,7 +241,8 @@ tic; clearvars -except test_iter bin_size test
 
 % -- Load LITHO1.0 Data -- 
     load('LITHO1_BaseData_OndrejReFormat.mat')
-
+    MASTER.model = 'LITHO1.0';
+    
 
 % ----------  Logically index cc, oc, stable, and Archean crust  --------
     %{ 
@@ -300,7 +302,7 @@ tic; clearvars -except test_iter bin_size test
 
 % -- Allocate empty subfields to each layer (to be filled in later) --
     n = {'aU';'aTh';'aK';'hf'};
-    x = zeros(length(Litho1.latlon),3,'single'); % 3 columns for mean, + uncertainty, - unc.
+    x = zeros(length(Litho1.latlon),3); % 3 columns for mean, + uncertainty, - unc.
     for i = 1:length(n)
     ice(:).(n{i})   = deal(x);
     water(:).(n{i}) = deal(x);
@@ -348,28 +350,28 @@ tic; clearvars -except test_iter bin_size test
      
     %- sums variables
     [s1_cc_sums,s2_cc_sums,s3_cc_sums,UC_cc_sums,MC_cc_sums,LC_cc_sums,LM_cc_sums] ...
-        = deal(zeros(iter,9,'single'));   
+        = deal(zeros(iter,9));   
     
     [s1_oc_sums,s2_oc_sums,s3_oc_sums,UC_oc_sums,MC_oc_sums,LC_oc_sums,LM_oc_sums] ...
-        = deal(zeros(iter,9,'single'));     
+        = deal(zeros(iter,9));     
     
     [s1_cc_flux_sums,s2_cc_flux_sums,s3_cc_flux_sums,UC_cc_flux_sums,MC_cc_flux_sums,LC_cc_flux_sums,LM_cc_flux_sums] ...
-        = deal(zeros(iter,length(simple2.energy(:,1))*2,'single'));   
+        = deal(zeros(iter,length(simple2.energy(:,1))*2));   
     
     [s1_oc_flux_sums,s2_oc_flux_sums,s3_oc_flux_sums,UC_oc_flux_sums,MC_oc_flux_sums,LC_oc_flux_sums,LM_oc_flux_sums] ...
-        = deal(zeros(iter,length(simple2.energy(:,1))*2,'single'));     
+        = deal(zeros(iter,length(simple2.energy(:,1))*2));     
     
 
     %{
     %- stats variables
     [s1_output_stat,s2_output_stat,s3_output_stat,UC_output_stat,LM_output_stat]...
-        = deal(zeros(length(Litho1.latlon),18,'single'));  
+        = deal(zeros(length(Litho1.latlon),18));  
     
     [s1_oc_output_stat,s2_oc_output_stat,s3_oc_output_stat,UC_oc_output_stat,...
         MC_oc_output_stat,LC_oc_output_statLM_oc_output_stat]...
-        = deal(zeros(length(Litho1.latlon),18,'single'));      
+        = deal(zeros(length(Litho1.latlon),18));      
     
-    [MC_output_stat,LC_output_stat] = deal(zeros(length(Litho1.latlon),36,'single')); % MC LC cc
+    [MC_output_stat,LC_output_stat] = deal(zeros(length(Litho1.latlon),36)); % MC LC cc
  %}
 clear n x i
 
@@ -456,10 +458,6 @@ clear n x i
     %load correlation_7-3-18.mat % THIS IS ONLY TO CMPARE GRIDDING EVERY
     %ITERATION AND GRIDDING ONLY ONCE. 
     
-    
-  
-    
-
 %% 4) ---- Assign and define constant parameters ----
 
 % -- Define K ratio of K2O mass -- (it is first used in this section)
@@ -472,9 +470,9 @@ clear n x i
     % -- Oceanic Crust abundances -- (White and Klein 2014, tbl 8; sigma = 30% (Huang etal. 2013 pg 2013)
     % We need to do this in two steps because assignment of multiple columns
     % to certain rows in a structure is a pain (i.e. 'oc' rows)...
-    oc_aU = zeros(length(oc),3,'single');  %need to pre-define so result is 64800 long (otherwise wont be)
-    oc_aTh = zeros(length(oc),3,'single'); 
-    oc_aK = zeros(length(oc),3,'single'); 
+    oc_aU = zeros(length(oc),3);  %need to pre-define so result is 64800 long (otherwise wont be)
+    oc_aTh = zeros(length(oc),3); 
+    oc_aK = zeros(length(oc),3); 
     x  = repmat([0.07 .021 .021]*10^-6,sum(oc),1); oc_aU(oc,:) = x; %create temp variable oc_a*
     x  = repmat([0.210 .063 .063]*10^-6,sum(oc),1); oc_aTh(oc,:) = x; 
     x  = repmat([0.0716 .0215 .0215]*10^-2,sum(oc),1); oc_aK(oc,:) = x;
@@ -694,50 +692,6 @@ grid.lim = [100000,160000,280000,600000,1000000]; %(m) distance from detector fo
         end
 %}
 
-%% 6) ---- Create combined input variable to minimize function inputs ----
-% -- Create structure with information only relevant to 1 iteration --
-    %{
-    This allows us to pass in only the information relevant to
-    whatever iteration of "n" we are on, rather than passing in the
-    entire structure for each layer.  This maybe will help with memory
-    overhead and speed (I am actually not sure if it will.  It depends on
-    if the entire array is transferred to each core when I call the
-    "huang13" function, of if the function just uses the array already in
-    the workspace. If it uses the workspace variable than this is a waste
-    of time... :(
-    %}
-%{
-    tic
-    names = {'lat';'lon';'rho';'aU';'aTh';'aK';'thick';'depth';'Vp'}; % used inside loop
-for n = 1:length(Litho1.latlon)
-    for i = 1:length(names)
-        simple1(n).s1(:).(names{i}) = s1(:).(names{i})(n,:); %dont worry about single point precision here, numbers not long
-        simple1(n).s2(:).(names{i}) = s2(:).(names{i})(n,:);
-        simple1(n).s3(:).(names{i}) = s3(:).(names{i})(n,:);
-        simple1(n).UC(:).(names{i}) = UC(:).(names{i})(n,:);
-        simple1(n).MC(:).(names{i}) = MC(:).(names{i})(n,:);
-        simple1(n).LC(:).(names{i}) = LC(:).(names{i})(n,:);
-        simple1(n).LM(:).(names{i}) = LM(:).(names{i})(n,:);
-    end
-        simple1(n).radius = Litho1.r(n);
-        %simple1(n).MC.pressure = MC.pressure(n);
-        %simple1(n).LC.pressure = LC.pressure(n);
-end
-
-% -- Create structure with relevent information to for every iteration --
-%{
-    simple2.hp = hp; 
-    simple2.oscillate = oscillate;
-    simple2.energy = simple2.energy; 
-    simple2.iso = iso;    
-    simple2.bivar = bivar; 
-    simple2.simple2.meth = simple2.meth; %simple2.meth 1 = Huang 13, simple2.meth 2 = Bivariate
-    toc
-    %}
-    %}
-    
-    clear n names
-
 %% 7) ---- MONTE CARLO  ----
 %{
 The monte carlo is used to calculate the mass distribution and heat production
@@ -750,173 +704,6 @@ constraints, then the heat production is calculated.
 rng shuffle %reseed random number generator based on time (DO NOT PUT INTO LOOP, time intensive and maybe logically not correct)
 
 tic
-%{
-parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
-%percent_done(n,length(Litho1.latlon),5)
-
-temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
-
-
-    if cc(n) == 1 % cc(n) = 1 is continental crust, 0 is oceanic crust
-    % -- Input data into "Huang13" function --
-    %{
-    "Huang13" function outputs data in matrix form (w/ length = "iter") as 
-    "layer"_output_sums and statistics form (median, + uncertainty, - uncertainty)
-    as "layer"_output_stat. The output_sums matrix is used to add together
-    those parameters every iteration of "n". In this way we can sum the mass
-    of the crust or mass of each element in each layer. 
-    
-    "output_sums" 
-    Col 
-     1      mass (kg)
-     2      mass of U (kg)
-     3      mass of Th (kg) 
-     4      mass of K40 (kg)
-     5      heat flow (W/m^2)
-     6      total heat production (W)
-     7      heat production from U (W)
-     8      heat production from Th (W)
-     9      heat production from K (W)
-    
-    "ouput_stat"
-    Col
-    1-3     mass (kg; median, + uncertainty, - uncertainty)
-    4-6     mass of U (kg)
-    7-9     mass of Th (kg) 
-    10-12   mass of K40 (kg)
-    13-15   heat production (W)
-    16-18   heat flow (W/m^2)
-    19-21   abundance of U (kg/kg)
-    22-24   abundance of Th (kg/kg)
-    25-27   abundance of K40 (kg/kg)
-    28-30   "f" fraction of felsic (only exists for MC and LC)
-    31-33   temperature in center of layer (only exists for MC and LC)
-    34-36   # of times repeated (only exists for MC and LC)
-     
-
-      - "Water" and "Ice" are commented out because they contain no U, Th or K --
-    
-         % -  Water  (water; layer 1)    
-               [water_output_stat, water_output_sums] = Huang13(n,iter,'water',water,simple);
-               water_sums = water_sums + water_output_sums;    
-    
-         % -  Ice  (ice; layer 2)    
-               [ice_output_stat, ice_output_sums] = Huang13(n,iter,'ice',ice,simple);
-               ice_sums = ice_sums + ice_output_sums;    
-      %}
-  
-         % -  Upper Sediment  (s1; layer 3)    
-               [s1_out(n), s1_output_sums,s1_geoResponse(n,:),s1_flux(n),s1_flux_sums,P]...
-                   = Huang13(n,iter,'s1',simple1(n).s1,simple2,cor.s1,Litho1.r(n),det,temp_P);
-              s1_cc_sums = s1_cc_sums + s1_output_sums;
-              s1_cc_flux_sums = s1_cc_flux_sums + s1_flux_sums;
-              temp_P = temp_P + P; % add up pressure
-            
-         % -  Middle Sediment  (s2; layer 4)    
-               [s2_out(n), s2_output_sums,s2_geoResponse(n,:),s2_flux(n),s2_flux_sums,P]...
-                   = Huang13(n,iter,'s2',simple1(n).s2,simple2,cor.s2,Litho1.r(n),det,temp_P);
-              s2_cc_sums = s2_cc_sums + s2_output_sums;  
-              s2_cc_flux_sums = s2_cc_flux_sums + s2_flux_sums;
-              temp_P = temp_P + P; % add up pressure
-      
-         % -  Lower Sediment  (s3; layer 5)    
-               [s3_out(n), s3_output_sums,s3_geoResponse(n,:),s3_flux(n),s3_flux_sums,P]...
-                   = Huang13(n,iter,'s3',simple1(n).s3,simple2,cor.s3,Litho1.r(n),det,temp_P);
-              s3_cc_sums = s3_cc_sums + s3_output_sums;               
-              s3_cc_flux_sums = s3_cc_flux_sums + s3_flux_sums;
-              temp_P = temp_P + P; % add up pressure
-           
-         % - Upper Crust (UC; layer 6)      
-               [UC_out(n), UC_output_sums,UC_geoResponse(n,:),UC_flux(n),UC_flux_sums,P]...
-                   = Huang13(n,iter,'UC',simple1(n).UC,simple2,cor.UC,Litho1.r(n),det,temp_P);
-              UC_cc_sums = UC_cc_sums + UC_output_sums; 
-              UC_cc_flux_sums = UC_cc_flux_sums + UC_flux_sums;
-              temp_P = temp_P + P; % add up pressure
-              
-         % - Middle Crust (MC; layer 7)      
-               [MC_out(n), MC_output_sums,MC_geoResponse(n,:),MC_flux(n),MC_flux_sums,P]...
-                   = Huang13(n,iter,'MC',simple1(n).MC,simple2,cor.MC,Litho1.r(n),det,temp_P);
-              MC_cc_sums = MC_cc_sums + MC_output_sums; 
-              MC_cc_flux_sums = MC_cc_flux_sums + MC_flux_sums;
-              temp_P = temp_P + P; % add up pressure
-              
-         % - Lower Crust (LC; layer 8)      
-               [LC_out(n), LC_output_sums,LC_geoResponse(n,:),LC_flux(n),LC_flux_sums,P]...
-                   = Huang13(n,iter,'LC',simple1(n).LC,simple2,cor.LC,Litho1.r(n),det,temp_P);
-              LC_cc_sums = LC_cc_sums + LC_output_sums;   
-              LC_cc_flux_sums = LC_cc_flux_sums + LC_flux_sums;
-              temp_P = temp_P + P; %moho(n).pressure = stat(P); % Pressure at base of LC (i.e. moho)
-  
-         % - Lithospheric Mantle (LM; layer 9)      
-               [LM_out(n), LM_output_sums,LM_geoResponse(n,:),LM_flux(n),LM_flux_sums,P]...
-                   = Huang13(n,iter,'LM',simple1(n).LM,simple2,cor.LM,Litho1.r(n),det,temp_P);
-               LM_cc_sums = LM_cc_sums + LM_output_sums;  
-               LM_cc_flux_sums = LM_cc_flux_sums + LM_flux_sums; 
-               %LAB(n).pressure = stat(temp_P + P); % pressure at base of lithosphere (i.e. LAB)
- 
-	
-    else  % ----  CALCULATE ATTRIBUTES FOR OCEANIC CRUST --------
-   
-                 % -  Upper Sediment  (s1; layer 3)    
-               [s1_out(n), s1_output_sums,s1_geoResponse(n,:),s1_flux(n),s1_flux_sums,P]...
-                   = Huang13(n,iter,'s1',simple1(n).s1,simple2,cor.s1,Litho1.r(n),det,temp_P);
-               s1_oc_sums = s1_oc_sums + s1_output_sums;
-               s1_oc_flux_sums = s1_oc_flux_sums + s1_flux_sums; 
-               temp_P = temp_P + P; % add up pressure
-   
-         % -  Middle Sediment  (s2; layer 4)    
-               [s2_out(n), s2_output_sums,s2_geoResponse(n,:),s2_flux(n),s2_flux_sums,P]...
-                   = Huang13(n,iter,'s2',simple1(n).s2,simple2,cor.s2,Litho1.r(n),det,temp_P);
-               s2_oc_sums = s2_oc_sums + s2_output_sums;               
-               s2_oc_flux_sums = s2_oc_flux_sums + s2_flux_sums;    
-               temp_P = temp_P + P; % add up pressure
-               
-         % -  Lower Sediment  (s3; layer 5)    
-               [s3_out(n), s3_output_sums,s3_geoResponse(n,:),s3_flux(n),s3_flux_sums,P]...
-                   = Huang13(n,iter,'s3',simple1(n).s3,simple2,cor.s3,Litho1.r(n),det,temp_P);
-               s3_oc_sums = s3_oc_sums + s3_output_sums;  
-               s3_oc_flux_sums = s3_oc_flux_sums + s3_flux_sums; 
-               temp_P = temp_P + P; % add up pressure
-              
-         % - Upper Crust (UC; layer 6)      
-               [UC_out(n), UC_output_sums,UC_geoResponse(n,:),UC_flux(n),UC_flux_sums,P]...
-                   = Huang13(n,iter,'UC',simple1(n).UC,simple2,cor.UC,Litho1.r(n),det,temp_P);
-              UC_oc_sums = UC_oc_sums + UC_output_sums; 
-              UC_oc_flux_sums = UC_oc_flux_sums + UC_flux_sums; 
-               temp_P = temp_P + P; % add up pressure   
-                 
-         % - Middle Crust (MC; layer 7)  (put layer "MC_oc" so it doesnt do
-            % abundance calculation) "MC_oc_output_stat" is different size than "MC_output_stat"
-               [MC_out(n), MC_output_sums,MC_geoResponse(n,:),MC_flux(n),MC_flux_sums,P]...
-                   = Huang13(n,iter,'MC_oc',simple1(n).MC,simple2,cor.MC,Litho1.r(n),det,temp_P);
-               MC_oc_sums = MC_oc_sums + MC_output_sums; 
-               MC_oc_flux_sums = MC_oc_flux_sums + MC_flux_sums; 
-               temp_P = temp_P + P; % add up pressure             
-                  
-         % - Lower Crust (LC; layer 8)      (put layer "LC_oc" so it doesnt do
-            % abundance calculation)"LC_oc_output_stat" is different size than "LC_output_stat"
-               [LC_out(n), LC_output_sums,LC_geoResponse(n,:),LC_flux(n),LC_flux_sums,P]...
-                   = Huang13(n,iter,'LC_oc',simple1(n).LC,simple2,cor.LC,Litho1.r(n),det,temp_P);
-               LC_oc_sums = LC_oc_sums + LC_output_sums; 
-               LC_oc_flux_sums = LC_oc_flux_sums + LC_flux_sums;
-               temp_P = temp_P + P; 
-               %moho(n).pressure = temp_P + P; % Pressure at base of LC (i.e. moho)
-               
-        % - Lithospheric Mantle (LM; layer 9) (need layer = 'LM_oc' so it
-        %            fills it in blank
-               [LM_out(n), LM_output_sums,LM_geoResponse(n,:),LM_flux(n),LM_flux_sums,P]...
-                   = Huang13(n,iter,'LM_oc',simple1(n).LM,simple2,cor.LM,Litho1.r(n),det,temp_P);
-               LM_oc_sums = LM_oc_sums + LM_output_sums; 
-               LM_oc_flux_sums = LM_oc_flux_sums + LM_flux_sums;  
-               %LAB(n).pressure = moho(n).pressure + P; % pressure at base of lithosphere (i.e. LAB)
-
-
-    end % end of if else statement
-       
-end % 1:64800
-%}
-
-
 
 parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
@@ -1088,8 +875,6 @@ MASTER.EndTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
 MASTER.memory = memory; 
 MASTER.numCells = length(Litho1.latlon); 
-
-
 
 %% 
 %{
@@ -1285,7 +1070,7 @@ Note: This would preferrably be done directly in loop, but parfor is
 %}
 
 %fprintf('Re-organizing Data...')
-%{
+
 % Mass of U, Th, K, and cell ('mass')(kg)
     n = {'U';'Th';'K';'mass'};% these need to be the same as "UC_out"
     % Note: putting 'mass.U' in "n" doesn't work.
@@ -1300,21 +1085,21 @@ Note: This would preferrably be done directly in loop, but parfor is
             LM.mass(:).(n{i})(j,:) = LM_out(j).mass.(n{i});
        end
     end
-
+%{
 % Flux of U238 and Th232 (TNU)
     n = {'U238';'Th232'};% these need to be the same as "UC_out"
     for j = 1:length(Litho1.latlon)
         for i = 1:length(n)    
-            s1.flux(:).(n{i})(j,:) = s1_flux(j).(n{i}) * TNU(:).(n{i});
-            s2.flux(:).(n{i})(j,:) = s2_flux(j).(n{i}) * TNU(:).(n{i});
-            s3.flux(:).(n{i})(j,:) = s3_flux(j).(n{i}) * TNU(:).(n{i});
-            UC.flux(:).(n{i})(j,:) = UC_flux(j).(n{i}) * TNU(:).(n{i});
-            MC.flux(:).(n{i})(j,:) = MC_flux(j).(n{i}) * TNU(:).(n{i});
-            LC.flux(:).(n{i})(j,:) = LC_flux(j).(n{i}) * TNU(:).(n{i});
-            LM.flux(:).(n{i})(j,:) = LM_flux(j).(n{i}) * TNU(:).(n{i});
+            s1.flux(:).(n{i})(j,:) = s1_flux(j).(n{i}) .* TNU(:).(n{i});
+            s2.flux(:).(n{i})(j,:) = s2_flux(j).(n{i}) .* TNU(:).(n{i});
+            s3.flux(:).(n{i})(j,:) = s3_flux(j).(n{i}) .* TNU(:).(n{i});
+            UC.flux(:).(n{i})(j,:) = UC_flux(j).(n{i}) .* TNU(:).(n{i});
+            MC.flux(:).(n{i})(j,:) = MC_flux(j).(n{i}) .* TNU(:).(n{i});
+            LC.flux(:).(n{i})(j,:) = LC_flux(j).(n{i}) .* TNU(:).(n{i});
+            LM.flux(:).(n{i})(j,:) = LM_flux(j).(n{i}) .* TNU(:).(n{i});
        end
     end    
-          
+   %}       
     
     
 % Heat production (W)
@@ -1360,7 +1145,7 @@ Note: This would preferrably be done directly in loop, but parfor is
     end  
     
     
-%}
+
 
 %% 11) ---- Reproduce Huang et al. 2013 Table 2 (flux) ---
 %{
@@ -1459,7 +1244,6 @@ huang.tab2.U238(7,:) = stat(U238_oc,method);
 huang.tab2.Th232(7,:) = stat(Th232_oc,method); 
 huang.tab2.total(7,:) = stat(U238_oc + Th232_oc,method); 
 
-
 % Bulk CC (Sed + UC + MC + LC) (TNU)
 U238_cc = flux.UC.sums.cc.U238 + flux.MC.sums.cc.U238 + flux.LC.sums.cc.U238...
         + flux.sed.sums.cc.U238; 
@@ -1504,8 +1288,10 @@ uncertainty for each reservoir.
 
 %}
 
-method = 4; % 4 = median +- 68% c.l., 6 = geometric mean +- std
-
+method = 4; % see help "stat"
+meth_norm = 5; 
+% note: UC, sed, and LM will always fit using normal dist. maximum
+% Liklihood fit because they are always normal (see Section 4)
 
 
 weight = s1.mass.mass(:,1) + s2.mass.mass(:,1) + s3.mass.mass(:,1); 
@@ -1528,57 +1314,57 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM'};
 
 
 % - Density (rho; g/cm3)
-x = [stat(sed.rho(find(sed.rho(cc))),method );...
-                stat(UC.rho(cc),method ); stat(MC.rho(cc),method ); stat(LC.rho(cc),method );...
-                stat(LM.rho(cc),method )]/1000; %(g/cm3) 
+x = [stat(sed.rho(find(sed.rho(cc))),meth_norm);...
+                stat(UC.rho(cc),meth_norm); stat(MC.rho(cc),meth_norm); stat(LC.rho(cc),meth_norm);...
+                stat(LM.rho(cc),meth_norm)]/1000; %(g/cm3) 
 huang.tab3.rho = x; 
 
 % - Thickness (km)
-x = [stat(s1.thick(find(sed.thick(cc))),method ); stat(UC.thick(cc),method ); stat(MC.thick(cc),method );...
-        stat(LC.thick(cc),method ); stat(LM.thick(cc),method )]/1000; %(km)
+x = [stat(s1.thick(find(sed.thick(cc))),meth_norm); stat(UC.thick(cc),meth_norm); stat(MC.thick(cc),meth_norm);...
+        stat(LC.thick(cc),meth_norm); stat(LM.thick(cc),meth_norm)]/1000; %(km)
 huang.tab3.thick = x; 
 
 % - Mass (10^21 kg)
-x = [stat(sed_sums(:,1),method ); stat(UC_cc_sums(:,1),method );stat(MC_cc_sums(:,1),method );...
-        stat(LC_cc_sums(:,1),method ); stat(LM_cc_sums(:,1))]/10^21; %(10^21 kg)
+x = [stat(sed_sums(:,1),meth_norm); stat(UC_cc_sums(:,1),meth_norm);stat(MC_cc_sums(:,1),meth_norm);...
+        stat(LC_cc_sums(:,1),meth_norm); stat(LM_cc_sums(:,1),meth_norm)]/10^21; %(10^21 kg)
 huang.tab3.mass.mass = x; 
 
 % - Abundance of U (ppm; ug/g)
-x = [stat(sed_sums(:,2)./sed_sums(:,1),method );stat(UC_cc_sums(:,2)./UC_cc_sums(:,1),method );...
+x = [stat(sed_sums(:,2)./sed_sums(:,1),meth_norm);stat(UC_cc_sums(:,2)./UC_cc_sums(:,1),meth_norm);...
         stat(MC_cc_sums(:,2)./MC_cc_sums(:,1),method );stat(LC_cc_sums(:,2)./LC_cc_sums(:,1),method );...
-        stat(LM_cc_sums(:,2)./LM_cc_sums(:,1),method )]*10^6; %(ppm)
+        stat(LM_cc_sums(:,2)./LM_cc_sums(:,1),meth_norm)]*10^6; %(ppm)
 huang.tab3.abund.U = x;    
 
 % - Abundance of Th (ppm; ug/g)
-x = [stat(sed_sums(:,3)./sed_sums(:,1),method );stat(UC_cc_sums(:,3)./UC_cc_sums(:,1),method );...
+x = [stat(sed_sums(:,3)./sed_sums(:,1),meth_norm);stat(UC_cc_sums(:,3)./UC_cc_sums(:,1),meth_norm);...
         stat(MC_cc_sums(:,3)./MC_cc_sums(:,1),method );stat(LC_cc_sums(:,3)./LC_cc_sums(:,1),method );...
-        stat(LM_cc_sums(:,3)./LM_cc_sums(:,1),method )]*10^6; %(ppm)
+        stat(LM_cc_sums(:,3)./LM_cc_sums(:,1),meth_norm)]*10^6; %(ppm)
 huang.tab3.abund.Th = x;   
 
 % - Abundance of K (wt%)
-x = [stat(sed_sums(:,4)./sed_sums(:,1),method );stat(UC_cc_sums(:,4)./UC_cc_sums(:,1),method );...
+x = [stat(sed_sums(:,4)./sed_sums(:,1),meth_norm);stat(UC_cc_sums(:,4)./UC_cc_sums(:,1),meth_norm);...
         stat(MC_cc_sums(:,4)./MC_cc_sums(:,1),method );stat(LC_cc_sums(:,4)./LC_cc_sums(:,1),method );...
-        stat(LM_cc_sums(:,4)./LM_cc_sums(:,1),method )]/K.b*10^2; %(wt%)
+        stat(LM_cc_sums(:,4)./LM_cc_sums(:,1),meth_norm)]/K.b*10^2; %(wt%)
 huang.tab3.abund.K = x;  
 
 % - Mass of U (10^15 kg)
-x = [stat(sed_sums(:,2),method); stat(UC_cc_sums(:,2),method);stat(MC_cc_sums(:,2),method);...
-        stat(LC_cc_sums(:,2),method); stat(LM_cc_sums(:,2),method)]/10^15;%(10^15 kg)
+x = [stat(sed_sums(:,2),meth_norm); stat(UC_cc_sums(:,2),meth_norm);stat(MC_cc_sums(:,2),method);...
+        stat(LC_cc_sums(:,2),method); stat(LM_cc_sums(:,2),meth_norm)]/10^15;%(10^15 kg)
 huang.tab3.mass.U = x; 
 
 % - Mass of Th (10^15 kg)
-x = [stat(sed_sums(:,3),method); stat(UC_cc_sums(:,3),method);stat(MC_cc_sums(:,3),method);...
-        stat(LC_cc_sums(:,3),method); stat(LM_cc_sums(:,3),method)]/10^15; %(10^15 kg)
+x = [stat(sed_sums(:,3),meth_norm); stat(UC_cc_sums(:,3),meth_norm);stat(MC_cc_sums(:,3),method);...
+        stat(LC_cc_sums(:,3),method); stat(LM_cc_sums(:,3),meth_norm)]/10^15; %(10^15 kg)
 huang.tab3.mass.Th = x; 
 
 % - Mass of K (10^19 kg)
-x = [stat(sed_sums(:,4),method); stat(UC_cc_sums(:,4),method);stat(MC_cc_sums(:,4),method);...
-        stat(LC_cc_sums(:,4),method); stat(LM_cc_sums(:,method),method)]/10^19/K.b; %(10^19 kg)
+x = [stat(sed_sums(:,4),meth_norm); stat(UC_cc_sums(:,4),meth_norm);stat(MC_cc_sums(:,4),method);...
+        stat(LC_cc_sums(:,4),method); stat(LM_cc_sums(:,method),meth_norm)]/10^19/K.b; %(10^19 kg)
 huang.tab3.mass.K = x; 
 
 % - Heat production (TW; 10^12 W)
-x = [stat(sed_sums(:,5),method); stat(UC_cc_sums(:,5),method);stat(MC_cc_sums(:,5),method);...
-        stat(LC_cc_sums(:,5),method); stat(LM_cc_sums(:,5),method)]/10^12; %(10^12 W)
+x = [stat(sed_sums(:,5),meth_norm); stat(UC_cc_sums(:,5),meth_norm);stat(MC_cc_sums(:,5),method);...
+        stat(LC_cc_sums(:,5),method); stat(LM_cc_sums(:,5),meth_norm)]/10^12; %(10^12 W)
 huang.tab3.hp = x;
     
 
@@ -1590,18 +1376,18 @@ huang.tab3.table = horzcat(huang.tab3.rho, huang.tab3.thick, huang.tab3.mass.mas
 
 
 %% Save Testing Data
-return
+%{
 load Results_TestingEnergyBins.mat 
 results(test,1) = bin_size(test); 
 results(test,2:4) = huang.tab2.total(end,:); 
 save Results_TestingEnergyBins.mat results
 fprintf('Energy Bin Size: %.1f  ||  Time Elapsed: %.1f min \n',bin_size(test),toc/60)
+%}
 
 
 
 
 
-return
 %% 13) ---- Save data ---
 
 % Record Method used
@@ -1619,10 +1405,10 @@ else
 end
 
 
-str = sprintf('Results_%1.1eIter_%s_%s_%s.mat',iter,m,d,datestr(date,'ddmmmyyyy'));
+str = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
 save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux')
 
-
+end
 
 %% (function) "rand_n"
 
@@ -1636,12 +1422,11 @@ function [output] = rand_n(iterations)
     if iterations == 1 
         output = 0;% this will cause the creation of a distribution at the central value
     elseif iterations >1 
-        output = randn(iterations,1,'single'); 
+        output = randn(iterations,1); 
     end
 end
 
 %% (function) "stat"
-%% (function) "output"
 function [output] = stat(PDF,whatKind)
 % STAT finds the median, + 68% confidence limit, or - 68% confidence limit
 %   of a distribution. 
@@ -1726,6 +1511,7 @@ elseif whatKind == 5 % normal maximum liklihood fit
        output= exp(mean(log(PDF))); 
    else
    output = mle(PDF,'distribution','normal'); 
+   output(:,3) = 0;
    end
    
 elseif whatKind == 6 % log-normal maximum liklihood fit
@@ -1803,7 +1589,7 @@ if nargin == 4
             log_minus = log_mu - log(mu - minusError);
             log_sigma = (log_plus+log_minus)/2;
 
-            dist = exp(randn(int,1,'single').*log_sigma(:)+log_mu(:));
+            dist = exp(randn(int,1).*log_sigma(:)+log_mu(:));
 
 
 
@@ -1815,7 +1601,7 @@ if nargin == 4
             log_minus = log_mu - log(mu - minusError);
             log_sigma = (log_plus+log_minus)/2;
 
-            dist = exp(randn(1,1,'single').*log_sigma(:)+log_mu(:));
+            dist = exp(randn(1,1).*log_sigma(:)+log_mu(:));
 
 
     end
@@ -1833,7 +1619,7 @@ elseif nargin == 5
             log_minus = log_mu - log(mu - minusError);
             log_sigma = (log_plus+log_minus)/2;
 
-            dist = single(exp(locate.*log_sigma(:)+log_mu(:))); %single outputs in single precision
+            dist = exp(locate.*log_sigma(:)+log_mu(:)); 
 
 
 
@@ -1845,7 +1631,7 @@ elseif nargin == 5
             log_minus = log_mu - log(mu - minusError);
             log_sigma = (log_plus+log_minus)/2;
 
-            dist = single(exp(locate.*log_sigma(:)+log_mu(:)));%single outputs in single precision
+            dist = exp(locate.*log_sigma(:)+log_mu(:));
 
     else
         warning('You entered %d input(s). You need 4 or 5.',nargin);
@@ -1900,12 +1686,12 @@ if nargin == 3
 
     elseif int > 1% returns distribution of "int" length 
 
-                dist = randn(int,1,'single').*error + mu;
+                dist = randn(int,1).*error + mu;
 
 
     elseif int == 0 %returns 1 random value from the distribution 
 
-                dist = randn(1,1,'single').*error + mu;
+                dist = randn(1,1).*error + mu;
 
 
     end
@@ -1918,12 +1704,12 @@ elseif nargin == 4 % Find random numbers when specified random distribution
 
     elseif int > 1% returns distribution of "int" length 
 
-                dist = single(locate.*error + mu);
+                dist = locate.*error + mu;
 
 
     elseif int == 0 %returns 1 random value from the distribution 
 
-                dist = single(locate.*error + mu);
+                dist = locate.*error + mu;
 
      end   
 else
