@@ -1,0 +1,516 @@
+
+    Usage:  matlab [-h|-help] | [-n | -e]
+                   [v=variant]
+                   [-c licensefile] [-display Xdisplay | -nodisplay]
+                   [--noFigureWindows]
+                   [-nosplash] [-debug]
+                   [-softwareopengl | -nosoftwareopengl]
+                   [-desktop | -nodesktop | -nojvm]
+                   [-r MATLAB_command] [-logfile log]
+                   [-singleCompThread]
+                   [-jdb [port]]
+                   [-Ddebugger [options]]
+                   [-nouserjavapath]
+
+    -h|-help             - Display arguments.
+    t
+B
+t
+B
+B
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+B
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+A
+n                   - Display final environment variables,
+                           arguments, and other diagnostic
+                           information. MATLAB is not run.
+    -e                   - Display ALL the environment variables and
+                           their values to standard output. MATLAB
+                           is not run. If the exit status is not
+                           0 on return then the variables and values
+                           may not be correct.
+    v=variant            - Start the version of MATLAB found
+                           in bin/glnxa64/variant instead of bin/glnxa64.
+    -c licensefile       - Set location of the license file that MATLAB
+                           should use.  It can have the form port@host or
+                           be a colon separated list of license files.
+                           The LM_LICENSE_FILE and MLM_LICENSE_FILE
+                           environment variables will be ignored.
+    -display Xdisplay    - Send X commands to X server display, Xdisplay.
+                           Linux only.
+    -nodisplay           - Do not display any X commands. The MATLAB
+                           desktop will not be started. However, unless
+                           -nojvm is also provided the Java virtual machine
+                           will be started.
+    -noFigureWindows     - Disables the display of figure windows in MATLAB.
+    -nosplash            - Do not display the splash screen during startup.
+    -softwareopengl      - Force MATLAB to start with software OpenGL
+                           libraries. Not available on Mac.
+    -nosoftwareopengl    - Disable auto-selection of software OpenGL
+                           when a graphics driver with known issues is detected.
+                           Not available on Mac.
+    -debug               - Provide debugging information especially for X
+                           based problems. Linux only.
+    -desktop             - Allow the MATLAB desktop to be started by a
+                           process without a controlling terminal. This is
+                           usually a required command line argument when
+                           attempting to start MATLAB from a window manager
+                           menu or desktop icon.
+    -nodesktop           - Do not start the MATLAB desktop. Use the current
+                           terminal for commands. The Java virtual machine
+                           will be started.
+    -singleCompThread    - Limit MATLAB to a single computational thread. 
+                           By default, MATLAB makes use of the multithreading 
+                           capabilities of the computer on which it is running.
+    -nojvm               - Shut off all Java support by not starting the
+                           Java virtual machine. In particular the MATLAB
+                           desktop will not be started.
+    -jdb [port]          - Enable remote Java debugging on port (default 4444)
+    -r MATLAB_command    - Start MATLAB and execute the MATLAB_command.
+    -logfile log         - Make a copy of any output to the command window
+                           in file log. This includes all crash reports.
+    -Ddebugger [options] - Start debugger to debug MATLAB.
+    -nouserjavapath      - Ignore custom javaclasspath.txt and javalibrarypath.txt files.
+
+/export/software/slurm/spool/slurmd/job11992176/slurm_script: line 12: run('/lustre/swipp/code/CODE_LITHO1_CalcAbund_v2_Cluster.m'): No such file or directory
