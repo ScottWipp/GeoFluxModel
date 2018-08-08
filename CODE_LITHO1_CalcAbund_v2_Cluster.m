@@ -110,12 +110,12 @@ Abundance + GeoFlux:
 
 
 %close all; 
-tic; clearvars -except testing iterations
+tic; %clearvars -except testing iterations
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 
    MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-
+   addpath('\lustre\swipp\code\Functions')
 
 %{
 % -- Create  or check for parallel Pool --
