@@ -115,7 +115,7 @@ tic; %clearvars -except testing iterations
 
 
    MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-   addpath('\lustre\swipp\code\Functions')
+   addpath('D:\Documents\Google Drive\2 Projects\1 Geoneutrino\6 Reference Model\MATLAB_LITHO1.0\Testing Folder\Functions')
 
 %{
 % -- Create  or check for parallel Pool --
@@ -164,10 +164,13 @@ tic; %clearvars -except testing iterations
 
 
 % loop through detectors by detectors(i,:), which pulls entire row
-
-
-
-    maxNumCompThreads(1);
+    
+    poolsize = 8; 
+    maxNumCompThreads(poolsize);
+    %parpool('local',poolsize);
+    MASTER.pool = gcp; 
+    %addAttachedFiles(MASTER.pool,{
+    
     iter = 50; 
     %iter = iterations;
     simple2.meth = 1; %1 = H13 method, 2 = bivariate 
@@ -693,7 +696,6 @@ K is calculated from comparison of seismic velocity and petrologic
 constraints, then the heat production is calculated. 
 %}
 %disp('Starting Monte carlo')
-
 rng shuffle %reseed random number generator based on time (DO NOT PUT INTO LOOP, time intensive and maybe logically not correct)
 
 tic
@@ -1415,6 +1417,7 @@ title('Abundance of U in MC')
 
 
 %% Total vs Lithospheric Flux plot
+close all
 bor = [43.5, 11.8, 10.4]; %center, +, - (Agostini et al. 2015)
 kam = [34.9,6.0,5.4]; % (Watanabe 2016 presentation, Tohoku)(updated from Gando 2013)
 jin = [58.5, 2.34, 2.34]; % Sramek 2016, 4% uncertainty
@@ -1425,20 +1428,21 @@ scott.bor = [31,7,6]; %borexino
 scott.kam = [27.0822, 6.5243, 5.3603];  %kamland
 scott.jin = [49.2619, 10.8205, 9.9830]; % jinping
 
-
+s.size = 200; 
+s.line = 2; 
 
 figure
-scatter(h13.bor(1),bor(1),150,'square','red'); hold on; 
-scatter(scott.bor(1),bor(1),150,'filled','square','red'); 
-scatter(h13.kam(1),kam(1),150,'square','blue'); 
-scatter(scott.kam(1),kam(1),150,'filled','square','blue'); 
+scatter(h13.bor(1),bor(1),s.size,'square','red','LineWidth', s.line); hold on; 
+scatter(scott.bor(1),bor(1),s.size,'filled','square','red','LineWidth', s.line); 
+scatter(h13.kam(1),kam(1),s.size,'square','blue','LineWidth', s.line); 
+scatter(scott.kam(1),kam(1),s.size,'filled','square','blue','LineWidth', s.line); 
 %scatter(os.jin(1),jin(1),150,'square','magenta'); 
 %scatter(scott.jin(1),jin(1),150,'square','filled','magenta'); 
 
-errorbar(h13.bor(1),bor(1),bor(3),bor(2),h13.bor(3),h13.bor(2),'red') 
-errorbar(scott.bor(1),bor(1),bor(3),bor(2),scott.bor(3),scott.bor(2),'red') 
-errorbar(h13.kam(1),kam(1),kam(3),kam(2),h13.kam(3),h13.kam(2),'blue') 
-errorbar(scott.kam(1),kam(1),kam(3),kam(2),scott.kam(3),scott.kam(2),'blue') 
+errorbar(h13.bor(1),bor(1),bor(3),bor(2),h13.bor(3),h13.bor(2),'red','LineWidth', s.line) 
+errorbar(scott.bor(1),bor(1),bor(3),bor(2),scott.bor(3),scott.bor(2),'red','LineWidth', s.line) 
+errorbar(h13.kam(1),kam(1),kam(3),kam(2),h13.kam(3),h13.kam(2),'blue','LineWidth', s.line) 
+errorbar(scott.kam(1),kam(1),kam(3),kam(2),scott.kam(3),scott.kam(2),'blue','LineWidth', s.line) 
 %errorbar(os.jin(1),jin(1),jin(3),jin(2),os.jin(3),os.jin(2),'blue') 
 %errorbar(scott.jin(1),jin(1),jin(3),jin(2),scott.jin(3),scott.jin(2),'blue') 
 
@@ -1446,18 +1450,18 @@ eqt1 = @(x) x+bor(1)-h13.bor(1);
 eqt2 = @(x) x+bor(1)-scott.bor(1); 
 eqt3 = @(x) x+kam(1)-h13.kam(1);
 eqt4 = @(x) x+kam(1)-scott.kam(1);
-eqt5 = @(x) x+jin(1)-os.jin(1);
-eqt6 = @(x) x+jin(1)-scott.jin(1); 
+%eqt5 = @(x) x+jin(1)-os.jin(1);
+%eqt6 = @(x) x+jin(1)-scott.jin(1); 
 fplot(eqt1,[0 40],'red','linestyle','--') 
 fplot(eqt2,[0 40],'red','linestyle','-') 
 fplot(eqt3,[0 40],'blue','linestyle','--')
 fplot(eqt4,[0 40],'blue','linestyle','-')
-fplot(eqt5,[0 40],'magenta','linestyle','--')
-fplot(eqt6,[0 40],'magenta','linestyle','-')
+%fplot(eqt5,[0 40],'magenta','linestyle','--')
+%fplot(eqt6,[0 40],'magenta','linestyle','-')
 
 
 
-grid
+grid on
 axis([0 40 0 60]) 
 title('Geoneutrino Signal at 2 detectors') 
 xlabel('Lithospheric Signal (TNU)') 
@@ -1465,313 +1469,23 @@ ylabel('Total Signal (TNU')
 set(gca,'fontSize',20) 
 [h,icons,plots,legend_text] = legend('H13','This Study: H13 Method','location','southeast'); 
 
+%% Least Squares fitting
+f = fittype('poly1'); % Linear Polynomial fit 
 
+h13.fit = fit([h13.kam(1);h13.bor(1)],[kam(1);bor(1)],f);
 
-%% (function) "rand_n"
-
-% This function will output "0" if iter = 1 so that we will draw the
-% central value of a distribution (instead of randomly along the
-% distribution shape). If iter > 1, then we can create random numbers along
-% a distribution (normal).  These numbers are single point floating numbers
-% because they use less memory. 
-function [output] = rand_n(iterations)
-
-    if iterations == 1 
-        output = 0;% this will cause the creation of a distribution at the central value
-    elseif iterations >1 
-        output = randn(iterations,1); 
-    end
-end
-
-%% (function) "stat"
-function [output] = stat(PDF,whatKind)
-% STAT finds the median, + 68% confidence limit, or - 68% confidence limit
-%   of a distribution. 
-%
-%   SYNTAX: 
-%   output(PDF) inds the median and 68% confidence limits of the distribution 
-%               "PDF" 
-%
-%   output(PDF, whatKind) returns the median, + sigma, or - sigma 
-%       (rounded to 5 decimal), of the distribution "PDF" correlating to
-%       whatKind = 1-6 respectively (see below). Size of PDF 
-%       is determined within the function.
-%
-%   output(PDF, whatKind, int) returns the median, + sigma, or - sigma 
-%       (rounded to 5 decimal), of the distribution "PDF" correlating to
-%       whatKind = 1, 2, or 3 respectively and size of distribution int. 
-%
-%
-%   whatKind: 
-%       1   |   Median +- 68.24% confidence limit (~1 sigma, but not)
-%       2   |   Median +- 95.45% confidence limit (~2 sigma, but not)
-%       3   |   Mean with standard deviation
-%       4   |   Geometric mean with +- std of log-distribution 
-%       5   |   normal dist. maximum Liklihood fit normal
-%       6   |   log-normal dist. maximum Likelihood fit log-normal
-%       7   |   gamma dist. maximum liklihood fit
-%
-%   -----            Written by Scott A. Wipperfurth             ----- 
-%   -----      University of Maryland-College Park, Geology      ----- 
-%   -----                        June, 2016                      -----
-%   -----                last modified May, 2018             -----
-%
-%   See also median, mean, std, nanmedian, nanmean
-
-
-
-% -- If only 1 function argument, i.e find median value --
-if nargin == 1
-    whatKind = 1;
-end
-
-
-% -- If 2 function argument, i.e find median value, but specify whatKind = [1-5] --
-
-int = length(PDF); %size of PDF
-
-
-% find Median, + sigma, - sigma 
-if whatKind == 1 % 68.24% of data (~1 sigma)
-   s_PDF = sort(PDF);
-   PDF_median = nanmedian(PDF);
-
-   output(1,1) = PDF_median;
-   output(1,2) = s_PDF(round((int)/2) + round(0.3413*int)) - PDF_median; % plus sigma
-   output(1,3) = PDF_median - s_PDF(round((int)/2) - round(0.3413*int)); % minus sigma
-
-elseif whatKind == 2 % 95.45% of data (~2 sigma)
-   s_PDF = sort(PDF);
-   PDF_median = nanmedian(PDF);
-
-   output(1,1) = PDF_median;
-   output(1,2) = s_PDF(round((int)/2) + round(0.4773*int)) - PDF_median; % plus sigma
-   output(1,3) = PDF_median - s_PDF(round((int)/2) - round(0.4773*int)); % minus sigma
-
-elseif whatKind == 3 % mean +- std
-   output(1,1) = nanmean(PDF); 
-   output(1,2) = nanstd(PDF); 
-
-
-elseif whatKind == 4 % mean +- from std of ln(pdf)
-   output = zeros(1,3);
-   s_PDF = log(PDF);
-   x = std(s_PDF); 
-   PDF_mean = exp(nanmean(s_PDF));
-
-   output(1,1) = PDF_mean;
-   output(1,2) = exp(nanmean(s_PDF) + x) - PDF_mean; % plus sigma
-   output(1,3) = PDF_mean - exp(nanmean(s_PDF) - x); % minus sigma     
-
-elseif whatKind == 5 % normal maximum liklihood fit
-   if length(PDF) == 1
-       output= exp(mean(log(PDF))); 
-   else
-   output = mle(PDF,'distribution','normal'); 
-   output(:,3) = 0;
-   end
-   
-elseif whatKind == 6 % log-normal maximum liklihood fit
-       if length(PDF) == 1
-       output= exp(mean(log(PDF))); 
-   else
-   x = mle(PDF,'distribution','lognormal'); 
-
-   output(1,1) = exp(x(1));
-   output(1,2) = exp(x(1) + x(2)) - exp(x(1)); % plus sigma
-   output(1,3) = exp(x(1)) - exp(x(1) - x(2)); % minus sigma    
-       end
-
-elseif whatKind == 7 % gamma maximum liklihood fit
-       if length(PDF) == 1
-       output= exp(mean(log(PDF))); 
-   else
-  output = mle(PDF,'distribution','gamma');   
-       end
-else
-     % Provide warning and stop program when wrong inputs
- error('Wrong input of "whatKind" or "int"') 
- end
-end
-
-%% (function) "logdist"
-function [dist, log_mu, log_sigma] = logdist(mu,plusError,minusError,int,locate)
-% LOGDIST Creates a log-normal distribution (non-gaussian) from input
-% variables or selects a single value from a distribution. It is also 
-% possible to select the location of the random value on the distribution 
-% using the 'locate' parameter (where 0 = mean). 
-%
-% logdist(mu,plusError,minusError, int, locate)
-%
-%   mu          = mean 
-%   plusError   = positive uncertainty
-%   minusError  = negative uncertainty
-%   int         = size of distribution ("0" if want single value)
-%   locate      = location of value on PDF (can be larger than 1)
-%   
-%   If int = 1, dist will be the central value always. If int = 0, then 
-%   output will be a single random value within the distribution, unless 
-%   "locate" is larger than 1. In that case the number of random values
-%   will be determined by the length of "locate".
-%   
-%   [dist, log_mu, log_sigma] = logdist(mu,plusError,minusError,int,locate)
-%   provides the distribution (dist), the log(mean) of the distribution,
-%   and log(sigma) of the distribution.  log(sigma) is a combination of
-%   the positive and negative uncertainty and is calculated as: 
-%
-%   log_plus = log(mu + plusError) - log_mu;
-%   log_minus = log_mu - log(mu - minusError);
-%   log_sigma = (log_plus+log_minus)/2; 
-%   
-% See also randist, lognrnd, lognfit, lognpdf, randn.
-%
-%   -----            Written by Scott A. Wipperfurth             ----- 
-%   -----      University of Maryland-College Park, Geology      ----- 
-%   -----                     Created June, 2016                 ----- 
-%   -----                     Updated June, 2018                 ----- 
-
-
-
-
-if nargin == 4 
-
-    if int == 1 % CENTRAL Value
-              dist = mu;
-
-
-
-    elseif int >1% MONTE CARLO 
-            log_mu = log(mu);
-            log_plus = log(mu + plusError) - log_mu;
-            log_minus = log_mu - log(mu - minusError);
-            log_sigma = (log_plus+log_minus)/2;
-
-            dist = exp(randn(int,1).*log_sigma(:)+log_mu(:));
-
-
-
-
-    elseif int ==0 %(i.e. you want 1 random value from the distribution)
-
-            log_mu = log(mu);
-            log_plus = log(mu + plusError) - log_mu;
-            log_minus = log_mu - log(mu - minusError);
-            log_sigma = (log_plus+log_minus)/2;
-
-            dist = exp(randn(1,1).*log_sigma(:)+log_mu(:));
-
-
-    end
+% -- Define function and options --
+    % - Linear Polynomial function y = mx+b (where m = 1)
+    fun = fittype({'x','1'}); 
     
-elseif nargin == 5
-    % Find random numbers when specified random distribution
-    if int == 1 % CENTRAL Value
-              dist = mu;
+    options = fitoptions('poly1','Robust', 'Bisquare');% Bisquare seeks to fit all data 
+    options.Lower = [1 -inf]; % constrain 'm' to 1 (don't mess with 'b')
+    options.Upper = [1 inf]; 
 
+    % - Fit data
+    h13.fit = fit([h13.kam(1);h13.bor(1)],[kam(1);bor(1)],fun,options);
 
-
-    elseif int >1% MONTE CARLO 
-            log_mu = log(mu);
-            log_plus = log(mu + plusError) - log_mu;
-            log_minus = log_mu - log(mu - minusError);
-            log_sigma = (log_plus+log_minus)/2;
-
-            dist = exp(locate.*log_sigma(:)+log_mu(:)); 
-
-
-
-
-    elseif int ==0 %(i.e. you want 1 random value from the distribution)
-
-            log_mu = log(mu);
-            log_plus = log(mu + plusError) - log_mu;
-            log_minus = log_mu - log(mu - minusError);
-            log_sigma = (log_plus+log_minus)/2;
-
-            dist = exp(locate.*log_sigma(:)+log_mu(:));
-
-    else
-        warning('You entered %d input(s). You need 4 or 5.',nargin);
-    end  
-end
-end
-
-%% (function) "randist"
-
-function [dist] = randist(mu,error,int,locate)
-%RANDIST normal distribution.
-%  RANDIST(mu,error,int,locate) creates a normal distribution (gaussian) 
-%  from input variables.  mu = mean, error = +- uncertainty, int = size/type
-%  of distribution output, and locate = location on PDF.  
-%
-%   int = 1, dist will be the central value always.
-%   int = 0, returned value is single random value within distribution
-%           (unless "locate" >1 in length)
-%   int > 0, returns distribution comprised of "int" values
-%
-%   locate = "single value" will return the random number at "locate"
-%       location on the distribution. This is used to provide correlated 
-%       values betwen creation of different distributions. If locate is a
-%       distribution it should be a uniform distribution (i.e. built using
-%       the RANDN function, not RAND). 'locate' = 0 will return mu, while 
-%       'locate' = 1 will return (5+3) = 8. 
-%
-%   
-%
-%   Example usage: 
-%   [dist] = randist(3,2,0) returns a single value from the distribution
-%       with mu = 3 and uncertainty +- = 2. 
-%
-%   [dist] = randist(3,2,0,0.9) returns a single value from the higher end
-%       of the distribution with mu = 3 and uncertainty +- = 2. 
-%
-% See also randn, logdist. 
-%
-%   -----            Written by Scott A. Wipperfurth             ----- 
-%   -----      University of Maryland-College Park, Geology      ----- 
-%   -----                    Created June, 2016                  ----- 
-%   -----                     Update June, 2018                  ----- 
-%
-
-
-
-if nargin == 3 
-    if int == 1   % returns central value
-
-                dist = mu;
-
-
-    elseif int > 1% returns distribution of "int" length 
-
-                dist = randn(int,1).*error + mu;
-
-
-    elseif int == 0 %returns 1 random value from the distribution 
-
-                dist = randn(1,1).*error + mu;
-
-
-    end
+    % - Fit data with uncertainty (Monte Carlo)
+    %x = logdist(
     
-elseif nargin == 4 % Find random numbers when specified random distribution
-     if int == 1   % returns central value
-
-                dist = mu;
-
-
-    elseif int > 1% returns distribution of "int" length 
-
-                dist = locate.*error + mu;
-
-
-    elseif int == 0 %returns 1 random value from the distribution 
-
-                dist = locate.*error + mu;
-
-     end   
-else
-    warning('You entered %d input(s). You need 3 or 4.',nargin);
-end
-end
-
-
+    
