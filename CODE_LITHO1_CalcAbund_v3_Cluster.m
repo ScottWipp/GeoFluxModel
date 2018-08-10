@@ -165,13 +165,13 @@ tic; %clearvars -except testing iterations
 
 % loop through detectors by detectors(i,:), which pulls entire row
     
-    poolsize = 6; 
+    poolsize = 19; 
     maxNumCompThreads(poolsize);
     %parpool('local',poolsize);
     MASTER.pool = gcp; 
     %addAttachedFiles(MASTER.pool,{
     
-    iter = 100; 
+    iter = 1000; 
     %iter = iterations;
     simple2.meth = 1; %1 = H13 method, 2 = bivariate 
     det = detectors('Borexino',:); 
@@ -870,7 +870,7 @@ end % 1:64800
 
 MASTER.EndTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
-MASTER.memory = memory; 
+%MASTER.memory = memory; %not available on a cluster
 MASTER.numCells = length(Litho1.latlon); 
 
 %% 
@@ -1269,14 +1269,13 @@ sed_sums = s1_cc_sums + s2_cc_sums + s3_cc_sums;
 huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM'};
 
 
-
-% - Density (rho; g/cm3)
+% - Density (rho; g/cm3) (use 'find' to only get non-zero values as to not mess up stats)
 x = [stat(sed.rho(find(sed.rho(cc))),meth_norm);...
                 stat(UC.rho(cc),meth_norm); stat(MC.rho(cc),meth_norm); stat(LC.rho(cc),meth_norm);...
                 stat(LM.rho(cc),meth_norm)]/1000; %(g/cm3) 
 huang.tab3.rho = x; 
 
-% - Thickness (km)
+% - Thickness (km) (use 'find' to only get non-zero values as to not mess up stats)
 x = [stat(s1.thick(find(sed.thick(cc))),meth_norm); stat(UC.thick(cc),meth_norm); stat(MC.thick(cc),meth_norm);...
         stat(LC.thick(cc),meth_norm); stat(LM.thick(cc),meth_norm)]/1000; %(km)
 huang.tab3.thick = x; 
@@ -1345,7 +1344,7 @@ fprintf('#Iteartions: %.1f  ||  Time Elapsed: %.1f min \n',iterations(testing),t
 
 
 
-return
+
 %% 13) ---- Save data ---
 
 % Record Method used
@@ -1364,6 +1363,7 @@ end
 
 
 str = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
+MASTER.save = str; 
 save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
 clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
 
