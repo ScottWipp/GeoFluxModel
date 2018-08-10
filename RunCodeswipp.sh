@@ -9,5 +9,5 @@
 #SBATCH -L matlab
 . ~/.profile
 module load matlab
-matlab -nodisplay -nosplash -nodesktop -r "run('/lustre/swipp/code/CODE_LITHO1_CalcAbund_v2_Cluster.m'); exit"
+matlab -nodisplay -nosplash -nodesktop -r "run('/lustre/swipp/code/CODE_LITHO1_CalcAbund_v3_Cluster.m'); exit"
 
