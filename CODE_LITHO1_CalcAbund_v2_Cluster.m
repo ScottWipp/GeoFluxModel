@@ -115,7 +115,7 @@ tic; %clearvars -except testing iterations
 
 
    MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-   addpath('D:\Documents\Google Drive\2 Projects\1 Geoneutrino\6 Reference Model\MATLAB_LITHO1.0\Testing Folder\Functions')
+   addpath('/lustre/swipp/code/Functions')
 
 %{
 % -- Create  or check for parallel Pool --
