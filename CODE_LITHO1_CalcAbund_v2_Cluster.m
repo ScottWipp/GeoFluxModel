@@ -707,6 +707,7 @@ temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it 
 
 
     if cc(n) == 1 % cc(n) = 1 is continental crust, 0 is oceanic crust
+        %fprintf('cc %d \n',n)
     % -- Input data into "Huang13" function --
 %{ 
     "Huang13" function outputs data in matrix form (w/ length = "iter") as 
@@ -805,7 +806,8 @@ temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it 
  
 	
     else  % ----  CALCULATE ATTRIBUTES FOR OCEANIC CRUST --------
-   
+           %fprintf('   oc %d \n',n)
+
                  % -  Upper Sediment  (s1; layer 3)    
                [s1_out(n), s1_output_sums,s1_geoResponse(n,:),s1_flux(n),s1_flux_sums,P]...
                    = Huang13_cluster(n,iter,'s1',s1,simple2,cor.s1,Litho1.r(n),det,temp_P);
@@ -880,6 +882,7 @@ Borexino (i.e. it is a good place to test things, including the gridding).
 
 
 n = 17114; 
+n = 20355; 
 s1 = UC;
 %s1.radius = simple1.radius; 
 s2 = simple2; 
@@ -1160,12 +1163,12 @@ huang.tab2.rows = {'Sed_cc';'UC';'MC';'LC';'LM';'Sed_oc';'OC';'Bulk CC';'Bulk Cr
 
 % Sediment (TNU)
 crust = s1_cc_flux_sums + s2_cc_flux_sums + s3_cc_flux_sums; 
-flux.sed.sums.cc.U238 = sum(crust(:,U238).*TNU.U238,2); 
-flux.sed.sums.cc.Th232 = sum(crust(:,Th232).*TNU.Th232,2); 
+flux.sed.sums.cc.U238 = sum(bsxfun(@times,crust(:,U238),TNU.U238),2); 
+flux.sed.sums.cc.Th232 = sum(bsxfun(@times,crust(:,Th232),TNU.Th232),2); 
 
 ocean = s1_oc_flux_sums + s2_oc_flux_sums + s3_oc_flux_sums; 
-flux.sed.sums.oc.U238 = sum(ocean(:,U238).*TNU.U238,2); 
-flux.sed.sums.oc.Th232 = sum(ocean(:,Th232).*TNU.Th232,2); 
+flux.sed.sums.oc.U238 = sum(bsxfun(@times,ocean(:,U238),TNU.U238),2); 
+flux.sed.sums.oc.Th232 = sum(bsxfun(@times,ocean(:,Th232),TNU.Th232),2); 
 
 huang.tab2.U238(1,:) = stat(flux.sed.sums.cc.U238,method); 
 huang.tab2.Th232(1,:) = stat(flux.sed.sums.cc.Th232,method); 
@@ -1178,11 +1181,11 @@ huang.tab2.total(6,:) = stat(flux.sed.sums.oc.U238+flux.sed.sums.oc.Th232,method
 
 
 % UC (TNU)
-flux.UC.sums.cc.U238 = sum(UC_cc_flux_sums(:,U238).*TNU.U238,2); 
-flux.UC.sums.cc.Th232 = sum(UC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.UC.sums.cc.U238 = sum(bsxfun(@times,UC_cc_flux_sums(:,U238),TNU.U238),2); 
+flux.UC.sums.cc.Th232 = sum(bsxfun(@times,UC_cc_flux_sums(:,Th232),TNU.Th232),2); 
 
-flux.UC.sums.oc.U238 = sum(UC_oc_flux_sums(:,U238).*TNU.U238,2); 
-flux.UC.sums.oc.Th232 = sum(UC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.UC.sums.oc.U238 = sum(bsxfun(@times,UC_oc_flux_sums(:,U238),TNU.U238),2); 
+flux.UC.sums.oc.Th232 = sum(bsxfun(@times,UC_oc_flux_sums(:,Th232),TNU.Th232),2); 
 
 huang.tab2.U238(2,:) = stat(flux.UC.sums.cc.U238,method); 
 huang.tab2.Th232(2,:) = stat(flux.UC.sums.cc.Th232,method); 
@@ -1190,11 +1193,11 @@ huang.tab2.total(2,:) = stat(flux.UC.sums.cc.U238+flux.UC.sums.cc.Th232,method);
 
 
 % MC (TNU)
-flux.MC.sums.cc.U238 = sum(MC_cc_flux_sums(:,U238).*TNU.U238,2); 
-flux.MC.sums.cc.Th232 = sum(MC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.MC.sums.cc.U238 = sum(bsxfun(@times,MC_cc_flux_sums(:,U238),TNU.U238),2); 
+flux.MC.sums.cc.Th232 = sum(bsxfun(@times,MC_cc_flux_sums(:,Th232),TNU.Th232),2); 
 
-flux.MC.sums.oc.U238 = sum(MC_oc_flux_sums(:,U238).*TNU.U238,2); 
-flux.MC.sums.oc.Th232 = sum(MC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.MC.sums.oc.U238 = sum(bsxfun(@times,MC_oc_flux_sums(:,U238),TNU.U238),2); 
+flux.MC.sums.oc.Th232 = sum(bsxfun(@times,MC_oc_flux_sums(:,Th232),TNU.Th232),2); 
 
 huang.tab2.U238(3,:) = stat(flux.MC.sums.cc.U238,method); 
 huang.tab2.Th232(3,:) = stat(flux.MC.sums.cc.Th232,method); 
@@ -1202,11 +1205,11 @@ huang.tab2.total(3,:) = stat(flux.MC.sums.cc.U238+flux.MC.sums.cc.Th232,method);
 
 
 % LC (TNU)
-flux.LC.sums.cc.U238 = sum(LC_cc_flux_sums(:,U238).*TNU.U238,2); 
-flux.LC.sums.cc.Th232 = sum(LC_cc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.LC.sums.cc.U238 = sum(bsxfun(@times,LC_cc_flux_sums(:,U238),TNU.U238),2); 
+flux.LC.sums.cc.Th232 = sum(bsxfun(@times,LC_cc_flux_sums(:,Th232),TNU.Th232),2); 
 
-flux.LC.sums.oc.U238 = sum(LC_oc_flux_sums(:,U238).*TNU.U238,2); 
-flux.LC.sums.oc.Th232 = sum(LC_oc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.LC.sums.oc.U238 = sum(bsxfun(@times,LC_oc_flux_sums(:,U238),TNU.U238),2); 
+flux.LC.sums.oc.Th232 = sum(bsxfun(@times,LC_oc_flux_sums(:,Th232),TNU.Th232),2); 
 
 huang.tab2.U238(4,:) = stat(flux.LC.sums.cc.U238,method); 
 huang.tab2.Th232(4,:) = stat(flux.LC.sums.cc.Th232,method); 
@@ -1214,11 +1217,11 @@ huang.tab2.total(4,:) = stat(flux.LC.sums.cc.U238+flux.LC.sums.cc.Th232,method);
 
 
 % LM (TNU)
-flux.LM.sums.cc.U238 = sum(LM_cc_flux_sums(:,U238).*TNU.U238,2); 
-flux.LM.sums.cc.Th232 = sum(LM_cc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.LM.sums.cc.U238 = sum(bsxfun(@times,LM_cc_flux_sums(:,U238),TNU.U238),2); 
+flux.LM.sums.cc.Th232 = sum(bsxfun(@times,LM_cc_flux_sums(:,Th232),TNU.Th232),2); 
 
-flux.LM.sums.oc.U238 = sum(LM_oc_flux_sums(:,U238).*TNU.U238,2); 
-flux.LM.sums.oc.Th232 = sum(LM_oc_flux_sums(:,Th232).*TNU.Th232,2); 
+flux.LM.sums.oc.U238 = sum(bsxfun(@times,LM_oc_flux_sums(:,U238),TNU.U238),2); 
+flux.LM.sums.oc.Th232 = sum(bsxfun(@times,LM_oc_flux_sums(:,Th232),TNU.Th232),2); 
 
 huang.tab2.U238(5,:) = stat(flux.LM.sums.cc.U238,method); 
 huang.tab2.Th232(5,:) = stat(flux.LM.sums.cc.Th232,method); 
