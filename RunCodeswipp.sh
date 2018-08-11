@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -L matlab
 #SBATCH -t 20
-#SBATCH --ntasks=8 
+#SBATCH --ntasks=10 
 #SBATCH --mem-per-cpu=4000	
 #SBATCH --share				
 #SBATCH --account=schmerr-prj-hi
