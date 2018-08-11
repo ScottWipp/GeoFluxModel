@@ -171,15 +171,15 @@ tic; %clearvars -except testing iterations
 
 
 
-
-% loop through detectors by detectors(i,:), which pulls entire row
     
+% loop through detectors by detectors(i,:), which pulls entire row
+    addpath('/lustre/swipp/code/Functions')
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
     parpool
     %parpool('local',poolsize);
     p = gcp('nocreate'); 
-    addAttachedFiles(p,{'Huang13_cluster.m','dis.m','logdist.m','rand_n.m','stat.m'...
+    %addAttachedFiles(p,{'Huang13_cluster.m','dis.m','logdist.m','rand_n.m','stat.m'...
             'voxVol.m','cart.m','fluxGrid.m','miniVox.m','randist.m','voxMass.m'});
     MASTER.pool.NumWorkers = p.NumWorkers; 
     MASTER.pool.Cluster = p.Cluster; 
