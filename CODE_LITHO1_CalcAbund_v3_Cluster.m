@@ -174,9 +174,9 @@ tic; %clearvars -except testing iterations
 
 % loop through detectors by detectors(i,:), which pulls entire row
     
-    poolsize = 19; 
-    maxNumCompThreads(poolsize);
-    parpool(poolsize);
+    %poolsize = 19; 
+    %maxNumCompThreads(poolsize);
+    parpool;
     %parpool('local',poolsize);
     p = gcp('nocreate'); 
     MASTER.pool.NumWorkers = p.NumWorkers; 
