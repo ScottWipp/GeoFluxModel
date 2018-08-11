@@ -158,17 +158,10 @@ tic; %clearvars -except testing iterations
 
 % -- Create  or check for parallel Pool --
     p = gcp('nocreate'); % Get info about paralel pool. If pool already, do not create new one.
-    poolsize = 6; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
+    %poolsize = 6; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
     %MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
     if isempty(p)
         parpool;
-        %MASTER.pool = gcp; 
-    elseif p.NumWorkers ~= poolsize
-        delete(gcp('nocreate'))
-        parpool;
-        %MASTER.pool = gcp; 
-    else
-        poolsize = p.NumWorkers; 
         %MASTER.pool = gcp; 
     end
     
