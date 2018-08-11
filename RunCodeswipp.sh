@@ -7,7 +7,6 @@
 #SBATCH --account=schmerr-prj-hi
 #SBATCH --mail-type=ALL
 #SBATCH --job-name=geonu_test
-#SBATCH --output=~/glue_home/slurmOutput/slurm-%j.out
 . ~/.profile
 module load matlab
 matlab -nodisplay -nosplash -nodesktop -r "run('/lustre/swipp/code/CODE_LITHO1_CalcAbund_v3_Cluster.m'); exit"
