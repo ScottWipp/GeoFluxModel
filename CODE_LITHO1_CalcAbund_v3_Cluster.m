@@ -116,15 +116,15 @@ tic; %clearvars -except testing iterations
 
    MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
    
-
+%{
        % Check if we are on cluster or not
     if exist('~/glue_home/ClusterResults','dir')==7 %7 means a directory
-        MASTER.pool.mode = 'Cluster'
+        MASTER.pool.mode = 'Cluster';
         addpath('/lustre/swipp/code/Functions')
     else
         MASTER.pool.mode = 'Local'; 
     end
-   
+   %}
    
 %{
 % -- Create  or check for parallel Pool --
@@ -174,6 +174,7 @@ tic; %clearvars -except testing iterations
     
 % loop through detectors by detectors(i,:), which pulls entire row
     addpath('/lustre/swipp/code/Functions')
+    MASTER.pool.mode = 'Cluster';
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
     parpool
