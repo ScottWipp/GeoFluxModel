@@ -161,7 +161,7 @@ tic; %clearvars -except testing iterations
     %poolsize = 6; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
     %MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
     if isempty(p)
-        parpool;
+        parpool(19);
         p = gcp; 
         %MASTER.pool = gcp; 
     end
