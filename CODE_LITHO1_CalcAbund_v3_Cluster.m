@@ -162,11 +162,11 @@ tic; %clearvars -except testing iterations
     %MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
     if isempty(p)
         parpool;
-        MASTER.pool = gcp; 
+        %MASTER.pool = gcp; 
     elseif p.NumWorkers ~= poolsize
         delete(gcp('nocreate'))
         parpool;
-        MASTER.pool = gcp; 
+        %MASTER.pool = gcp; 
     else
         poolsize = p.NumWorkers; 
         %MASTER.pool = gcp; 
