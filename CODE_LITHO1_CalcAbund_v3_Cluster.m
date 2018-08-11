@@ -126,24 +126,10 @@ tic; %clearvars -except testing iterations
     end
    %}
    
-%{
-% -- Create  or check for parallel Pool --
-    p = gcp('nocreate'); % Get info about paralel pool. If pool already, do not create new one.
-    poolsize = 8; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
-    MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
-    if isempty(p)
-        parpool('local',poolsize);
-        MASTER.pool = gcp; 
-    elseif p.NumWorkers ~= poolsize
-        delete(gcp('nocreate'))
-        parpool('local',poolsize);
-        MASTER.pool = gcp; 
-    else
-        poolsize = p.NumWorkers; 
-        MASTER.pool = gcp; 
-    end
-    fprintf('Size of parallel pool: %d workers \n',poolsize); clear poolsize p; 
-%}
+
+
+    %fprintf('Size of parallel pool: %d workers \n',poolsize); clear poolsize p; 
+
     
     
 % -- Prompt input for # of iterations --
@@ -170,16 +156,27 @@ tic; %clearvars -except testing iterations
 %%%%%%%%%%%%%%%%%%%%%%% CHANGE THESE FOR CLUSTER ANALYSIS %%%%%%%%%%%%%%%%%
 
 
-
+% -- Create  or check for parallel Pool --
+    p = gcp('nocreate'); % Get info about paralel pool. If pool already, do not create new one.
+    poolsize = 6; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
+    %MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
+    if isempty(p)
+        parpool;
+        MASTER.pool = gcp; 
+    elseif p.NumWorkers ~= poolsize
+        delete(gcp('nocreate'))
+        parpool;
+        MASTER.pool = gcp; 
+    else
+        poolsize = p.NumWorkers; 
+        %MASTER.pool = gcp; 
+    end
     
-% loop through detectors by detectors(i,:), which pulls entire row
     addpath('/lustre/swipp/code/Functions')
     MASTER.pool.mode = 'Local';
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
-    parpool; 
     %parpool('local',poolsize);
-    p = gcp('nocreate'); 
     %addAttachedFiles(p,{'Huang13_cluster.m','dis.m','logdist.m','rand_n.m','stat.m'...
             %'voxVol.m','cart.m','fluxGrid.m','miniVox.m','randist.m','voxMass.m'});
     MASTER.pool.NumWorkers = p.NumWorkers; 
@@ -189,7 +186,7 @@ tic; %clearvars -except testing iterations
     
     iter = 1000; 
     %iter = iterations;
-    simple2.meth = 2; %1 = H13 method, 2 = bivariate 
+    simple2.meth = 1; %1 = H13 method, 2 = bivariate 
     det = detectors('Borexino',:); 
     %det = detectors(all_det,:); 
     %det = 0;
