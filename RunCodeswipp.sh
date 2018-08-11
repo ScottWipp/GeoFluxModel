@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH -L matlab
-#SBATCH -t 10
+#SBATCH -t 20
 #SBATCH --ntasks=19 
 #SBATCH --mem-per-cpu=4000	
 #SBATCH --share				
