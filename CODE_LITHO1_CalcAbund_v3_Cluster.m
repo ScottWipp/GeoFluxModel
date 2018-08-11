@@ -165,10 +165,13 @@ tic; %clearvars -except testing iterations
 
 % loop through detectors by detectors(i,:), which pulls entire row
     
-    poolsize = 19; 
-    maxNumCompThreads(poolsize);
+    %poolsize = 19; 
+    %maxNumCompThreads(poolsize);
     %parpool('local',poolsize);
-    MASTER.pool = gcp; 
+    p = gcp('nocreate'); 
+    MASTER.pool.NumWorkers = p.NumWorkers; 
+    MASTER.pool.Cluster = p.Cluster; 
+    MASTER.pool.Connected = p.Connected; 
     %addAttachedFiles(MASTER.pool,{
     
     iter = 1000; 
@@ -182,13 +185,16 @@ tic; %clearvars -except testing iterations
     MASTER.detector = det; 
     
     
+    % Check if we are on cluster or not
+    if exist('~/glue_home/ClusterResults','dir')==7 %7 means a directory
+        MASTER.pool.mode = 'Cluster'; 
+    else
+        MASTER.pool.mode = 'Local'; 
+    end
     
     
     
-    
-    
-    
-    
+   
     
     
     
@@ -705,7 +711,7 @@ parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
 
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
 
-
+x = numlabs
     if cc(n) == 1 % cc(n) = 1 is continental crust, 0 is oceanic crust
         %fprintf('cc %d \n',n)
     % -- Input data into "Huang13" function --
@@ -1361,11 +1367,38 @@ else
     d = 'noFlux';
 end
 
+if strcmp(MASTER.pool.mode,'Local')==1
+    % Save in local location in "Results" folder
+    
+    if exist(fullfile(cd,'Results'),'dir')~=7
+        mkdir Results
+    end
+   cd Results\
+   str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
+   str2 = fullfile(pwd,str1); 
+   MASTER.save.name = str1;  MASTER.save.locate = pwd; cd ..
+   save(str2,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
+   clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
 
-str = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
-MASTER.save = str; 
-save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
-clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+elseif strcmp(MASTER.pool.mode,'Cluster')==1
+    % Save in cluster location on my home drive
+    
+   str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
+   str2 = fullfile('~/glue_home/ClusterResults/',str1); 
+   MASTER.save.name = str1;  MASTER.save.locate = '~/glue_home/ClusterResults/'; 
+   save(str2,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
+   clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+  
+else 
+    % Save in current directory
+    str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
+
+    MASTER.save.name = str1; MASTER.save.locate = pwd; 
+    save(str1,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
+    clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+
+end
+
 
 return
 
