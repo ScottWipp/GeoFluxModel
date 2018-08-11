@@ -176,9 +176,11 @@ tic; %clearvars -except testing iterations
     
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
-    parpool;
+    parpool
     %parpool('local',poolsize);
     p = gcp('nocreate'); 
+    addAttachedFiles(p,{'Huang13_cluster.m','dis.m','logdist.m','rand_n.m','stat.m'...
+            'voxVol.m','cart.m','fluxGrid.m','miniVox.m','randist.m','voxMass.m'});
     MASTER.pool.NumWorkers = p.NumWorkers; 
     MASTER.pool.Cluster = p.Cluster; 
     MASTER.pool.Connected = p.Connected; 
