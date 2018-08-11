@@ -115,8 +115,17 @@ tic; %clearvars -except testing iterations
 
 
    MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-   addpath('/lustre/swipp/code/Functions')
+   
 
+       % Check if we are on cluster or not
+    if exist('~/glue_home/ClusterResults','dir')==7 %7 means a directory
+        MASTER.pool.mode = 'Cluster'; 
+        addpath('/lustre/swipp/code/Functions')
+    else
+        MASTER.pool.mode = 'Local'; 
+    end
+   
+   
 %{
 % -- Create  or check for parallel Pool --
     p = gcp('nocreate'); % Get info about paralel pool. If pool already, do not create new one.
@@ -165,14 +174,15 @@ tic; %clearvars -except testing iterations
 
 % loop through detectors by detectors(i,:), which pulls entire row
     
-    %poolsize = 19; 
-    %maxNumCompThreads(poolsize);
+    poolsize = 19; 
+    maxNumCompThreads(poolsize);
+    parpool(poolsize);
     %parpool('local',poolsize);
     p = gcp('nocreate'); 
     MASTER.pool.NumWorkers = p.NumWorkers; 
     MASTER.pool.Cluster = p.Cluster; 
     MASTER.pool.Connected = p.Connected; 
-    %addAttachedFiles(MASTER.pool,{
+   
     
     iter = 1000; 
     %iter = iterations;
@@ -185,12 +195,7 @@ tic; %clearvars -except testing iterations
     MASTER.detector = det; 
     
     
-    % Check if we are on cluster or not
-    if exist('~/glue_home/ClusterResults','dir')==7 %7 means a directory
-        MASTER.pool.mode = 'Cluster'; 
-    else
-        MASTER.pool.mode = 'Local'; 
-    end
+
     
     
     
