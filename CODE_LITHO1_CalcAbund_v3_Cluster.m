@@ -174,10 +174,10 @@ tic; %clearvars -except testing iterations
     
 % loop through detectors by detectors(i,:), which pulls entire row
     addpath('/lustre/swipp/code/Functions')
-    MASTER.pool.mode = 'Cluster';
+    MASTER.pool.mode = 'Local';
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
-    parpool
+    parpool; 
     %parpool('local',poolsize);
     p = gcp('nocreate'); 
     %addAttachedFiles(p,{'Huang13_cluster.m','dis.m','logdist.m','rand_n.m','stat.m'...
@@ -189,7 +189,7 @@ tic; %clearvars -except testing iterations
     
     iter = 1000; 
     %iter = iterations;
-    simple2.meth = 1; %1 = H13 method, 2 = bivariate 
+    simple2.meth = 2; %1 = H13 method, 2 = bivariate 
     det = detectors('Borexino',:); 
     %det = detectors(all_det,:); 
     %det = 0;
@@ -897,14 +897,14 @@ Borexino (i.e. it is a good place to test things, including the gridding).
 
 n = 17114; 
 %n = 20355; 
-s1 = UC;
+s1 = MC;
 %s1.radius = simple1.radius; 
 s2 = simple2; 
-cor = cor.UC; 
+cor = cor.MC; 
 SurfRadius = Litho1.r(n);
 detector = det; 
 P = zeros(iter,1); 
-layer = 'UC';
+layer = 'MC';
 
 
 for "geoFlux" function
@@ -1375,6 +1375,15 @@ else
     d = 'noFlux';
 end
 
+
+    str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
+
+    MASTER.save.name = str1; MASTER.save.locate = pwd; 
+    save(str1,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
+    clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+
+
+%{
 if strcmp(MASTER.pool.mode,'Local')==1
     % Save in local location in "Results" folder
     
@@ -1406,7 +1415,7 @@ else
     clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
 
 end
-
+%}
 
 return
 
