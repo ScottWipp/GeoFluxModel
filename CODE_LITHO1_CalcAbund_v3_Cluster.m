@@ -103,6 +103,12 @@ Abundance + GeoFlux:
 30,000 iterations = > 12 hours (with coarse gridding...)
 
 %}
+
+for dets = 1:3
+   for methods = 2
+       
+    clearvars -except dets methods 
+
 %% 1) ---- LOAD DATA FROM LITHO 1.0 ----
     % Set maximum number of cores to use
     
@@ -157,16 +163,31 @@ tic; %clearvars -except testing iterations
 
 
 % -- Create  or check for parallel Pool --
-    p = gcp('nocreate')% Get info about paralel pool. If pool already, do not create new one.
+    p = gcp('nocreate');% Get info about paralel pool. If pool already, do not create new one.
     %poolsize = 6; % 8 = fastest (~~40% faster than 4 cores w/ 1000 iterations)
     %MASTER.poolsize = poolsize; %record data into "MASTER" file with all run information
     if isempty(p)
-        parpool(19);
+        parpool(8);
         p = gcp; 
         %MASTER.pool = gcp; 
     end
     
-    addpath('/lustre/swipp/code/Functions')
+    
+    
+    
+    
+    
+    % ENABLE THIS
+    %addpath('/lustre/swipp/code/Functions')
+    
+    
+    
+    
+    
+    
+    
+    
+    
     MASTER.pool.mode = 'Local';
     %poolsize = 19; 
     %maxNumCompThreads(poolsize);
@@ -178,10 +199,10 @@ tic; %clearvars -except testing iterations
     MASTER.pool.Connected = p.Connected; 
    
     
-    iter = 1000; 
+    iter = 35000; 
     %iter = iterations;
-    simple2.meth = 1; %1 = H13 method, 2 = bivariate 
-    det = detectors('Borexino',:); 
+    simple2.meth = methods; %1 = H13 method, 2 = bivariate 
+    det = detectors(dets,:); 
     %det = detectors(all_det,:); 
     %det = 0;
     %abundance = 1; % 1 = don't calculate abundance again
@@ -244,6 +265,8 @@ tic; %clearvars -except testing iterations
     load('LITHO1_BaseData_OndrejReFormat.mat')
     MASTER.model = 'LITHO1.0';
     
+    
+
 
 % ----------  Logically index cc, oc, stable, and Archean crust  --------
     %{ 
@@ -1366,13 +1389,15 @@ else
     d = 'noFlux';
 end
 
-
+    sprintf('Time Elapsed: %.1f min |  Det: = %s | Meth = %s \n',toc/60, det.Properties.RowNames{1},MASTER.method)
     str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.mat',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
 
     MASTER.save.name = str1; MASTER.save.locate = pwd; 
     save(str1,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc')
-    clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
-
+   % clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+    datestr(now)
+   end
+end
 
 %{
 if strcmp(MASTER.pool.mode,'Local')==1
