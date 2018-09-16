@@ -696,10 +696,8 @@ parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
 
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
-    fprintf('Made it to %d',n); 
     if cc(n) == 1 % cc(n) = 1 is continental crust, 0 is oceanic crust
         %fprintf('cc %d \n',n)
-        fprintf('Made it to crust'); 
     % -- Input data into "Huang13" function --
 %{ 
     "Huang13" function outputs data in matrix form (w/ length = "iter") as 
@@ -800,7 +798,6 @@ temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it 
 	
     else  % ----  CALCULATE ATTRIBUTES FOR OCEANIC CRUST --------
            %fprintf('   oc %d \n',n)
-    fprintf('Made it to ocean'); 
                  % -  Upper Sediment  (s1; layer 3)    
                [s1_out(n), s1_output_sums,s1_geoResponse(n,:),s1_flux(n),s1_flux_sums,P,s1_distCount]...
                    = Huang13_cluster(n,iter,'s1',s1,simple2,cor.s1,Litho1.r(n),det,temp_P);
@@ -856,7 +853,6 @@ temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it 
 
 
     end % end of if else statement
-    fprintf('made it to near field')
         % -- Record Flux vs Distance information --
             s1_distCount_sums = s1_distCount_sums + s1_distCount; 
             s2_distCount_sums = s2_distCount_sums + s2_distCount; 
