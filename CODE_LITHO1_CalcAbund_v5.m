@@ -105,7 +105,7 @@ MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions')
 numCores = 19; 
 myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
-    
+    gcp %print cluster information
 % -- Define Possible Detectors --
     % Includes Name, longitude, latitude, depth (m), detector efficiency,
     % protons, nf_botleft_lonlat
