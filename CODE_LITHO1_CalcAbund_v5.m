@@ -102,7 +102,8 @@ tic; %clearvars -except testing iterations
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-      
+addpath('/lustre/swipp/code/Functions')
+    
     
 % -- Define Possible Detectors --
     % Includes Name, longitude, latitude, depth (m), detector efficiency,
