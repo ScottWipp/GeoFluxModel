@@ -142,7 +142,6 @@ MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions') %add path to function location
 
 
-    gcp %print cluster information
 % -- Define Possible Detectors --
     % Includes Name, longitude, latitude, depth (m), detector efficiency,
     % protons, nf_botleft_lonlat
@@ -934,6 +933,7 @@ fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
 save testing.mat UC_cc_sums
 disp('worked')
+    gcp %print cluster information
 
 
 return
