@@ -105,7 +105,7 @@ MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions')
 numCores = 8; 
 myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
-    gcp %print cluster information
+   % gcp %print cluster information
 % -- Define Possible Detectors --
     % Includes Name, longitude, latitude, depth (m), detector efficiency,
     % protons, nf_botleft_lonlat
@@ -124,7 +124,7 @@ myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,
     det = detectors(dets,:); 
 
     
-    iter = 15000; 
+    iter = 500; 
     simple2.meth = methods; %1 = H13 method, 2 = bivariate 
     %det = detectors(all_det,:); 
     %det = 0;
