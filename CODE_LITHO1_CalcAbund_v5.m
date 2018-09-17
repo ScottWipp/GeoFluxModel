@@ -88,7 +88,7 @@
 
 
 
-for dets = 2 %1:6
+for dets = 5 %1:6
    for methods = 1 %1 = H13, 2 = Bivariate
        
     clearvars -except dets methods 
@@ -162,7 +162,7 @@ myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,
     det = detectors(dets,:); 
 
     
-    iter = 10; 
+    iter = 30000; 
     simple2.meth = methods; %1 = H13 method, 2 = bivariate 
     %det = detectors(all_det,:); 
     %det = 0;
@@ -730,7 +730,7 @@ tic
 fprintf('Lithosphere Monte Carlo...')
 nf_temp = nearField.logic; % Needed otherwise "nearField" becomes broadcast variable
 
-parfor n = 1:10000; %length(Litho1.latlon) % n = a specific cell (out of 64,800)
+parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
 
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
@@ -931,13 +931,7 @@ MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
 MASTER.numCells = length(Litho1.latlon); 
 fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
-x = toc/60; 
 
-save testing.mat UC_oc_sums x
-disp('worked')
-
-
-return
 %% 7) ---- Mantle Monte Carlo ----
 
 if calcMantle == true
@@ -1741,7 +1735,7 @@ MASTER.save.name = str1; MASTER.save.locate = pwd;
     datestr(now)
 
 
-fprintf('Saved data: \n %s',str)
+fprintf('Saved data: \n %s \n',str)
 
 
     
@@ -1844,7 +1838,7 @@ fclose(fid);
 fclose('all'); % Fully releases the file (otherwise Matlab won't for some reason)
     
 
-disp('Saved Table 1 (geophysical information)')
+disp('Saved Table 1 (geophysical information) \n')
 
 %% (latex_Table 2) Format 'huang.tab2' into Latex format and write to .txt ----
 clear x r h y
@@ -1930,6 +1924,9 @@ count.crust.Th232 = flux.UC.count.Th232 + flux.MC.count.Th232 + flux.LC.count.Th
 count.litho.U238 = count.sed.U238 + count.crust.U238 + flux.LM.count.U238; 
 count.litho.Th232 = count.sed.Th232 + count.crust.Th232 + flux.LM.count.Th232; 
 
+count.lithoNoSed.U238 = count.crust.U238 + flux.LM.count.U238; 
+count.lithoNoSed.Th232 = count.crust.Th232 + flux.LM.count.Th232;
+
 % Convecting Mantle 
 count.man.U238 = flux.man.dm.count.U238+flux.man.em.count.U238; 
 count.man.Th232 = flux.man.dm.count.Th232+flux.man.em.count.Th232; 
@@ -1942,15 +1939,19 @@ count.bse.Th232 = count.man.Th232 + count.litho.Th232;
 count.total.sed = count.sed.U238 + count.sed.Th232; 
 count.total.crust = count.crust.U238 + count.crust.Th232; 
 count.total.litho = count.litho.U238 + count.litho.Th232; 
+count.total.lithoNoSed = count.lithoNoSed.U238 + count.lithoNoSed.Th232;
 count.total.man = count.man.U238 + count.man.Th232; 
 count.total.bse = count.bse.U238 + count.bse.Th232; 
 
-
+%{
 % Scale values to precisely match Monte Carlo results (values of "count"
 % slightly off due to how its summed)
-wt = huang.tab2.total(end,1)/sum(count.total.bse);
-
-
+wt.bse = huang.tab2.total(end,1)/sum(count.total.bse);
+wt.crust = huang.tab2.total(8,1)/sum(count.total.crust);
+wt.sed = (huang.tab2.total(1,1)+huang.tab2.total(6,1))/sum(count.total.sed); 
+wt.man = (huang.tab2.total(13,1)+huang.tab2.total(14,1))/sum(count.total.man);
+wt.litho = 
+%}
 
 
 % Plot Figure
@@ -1996,7 +1997,7 @@ set(gca,'XScale','log') % x-axis = log scale
     print( str_eps,'-depsc');
     print(str_png,'-dpng','-r300')
 
-disp('Saved Figure 1 (Distance vs Flux)')
+disp('Saved Figure 1 (Distance vs Flux) \n')
 
 
    end
