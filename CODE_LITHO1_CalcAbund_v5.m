@@ -93,6 +93,43 @@ for dets = 2 %1:6
        
     clearvars -except dets methods 
 
+    
+    
+%% Set Cluster Information
+%{
+
+% Get a handle to the cluster
+c = parcluster;
+
+% Get the job ID
+id = j.ID;
+
+
+% Get state of job
+state = j.state
+
+
+
+% Submit a batch pool job using 8 workers for 16 simulations
+j = c.batch(@parallel_example, 1, {}, ‘Pool’, 8);
+
+ClusterInfo.setWallTime('50')
+ClusterInfo.setMemUsage('4000mb')
+ClusterInfo.UserDefinedOptions('--ntasks=19','--share','--account=schmerr-prj-hi','--mail-type=ALL',...
+    '--job-name=geonu_test');
+
+addpath('/lustre/swipp/code/Functions') %add path to function location
+
+numCores = 7; 
+
+j = c.batch
+
+%}
+
+%myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
+    
+    maxNumCompThreads(8);
+    
 %% 1) ---- Define Model Space ----
     % Set maximum number of cores to use
     
@@ -102,9 +139,7 @@ tic; %clearvars -except testing iterations
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-addpath('/lustre/swipp/code/Functions')
-numCores = 7; 
-%myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
+
 
    % gcp %print cluster information
 % -- Define Possible Detectors --
@@ -125,7 +160,7 @@ numCores = 7;
     det = detectors(dets,:); 
 
     
-    iter = 500; 
+    iter = 10; 
     simple2.meth = methods; %1 = H13 method, 2 = bivariate 
     %det = detectors(all_det,:); 
     %det = 0;
@@ -693,7 +728,7 @@ tic
 fprintf('Lithosphere Monte Carlo...')
 nf_temp = nearField.logic; % Needed otherwise "nearField" becomes broadcast variable
 
-parfor n = 1:length(Litho1.latlon) % n = a specific cell (out of 64,800)
+parfor n = 1:50; %length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
 
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
@@ -894,6 +929,13 @@ MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
 MASTER.numCells = length(Litho1.latlon); 
 fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
+
+
+save testing.mat UC_cc_sums
+disp('worked')
+
+
+return
 %% 7) ---- Mantle Monte Carlo ----
 
 if calcMantle == true
