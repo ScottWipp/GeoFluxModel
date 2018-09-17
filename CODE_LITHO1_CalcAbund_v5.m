@@ -128,7 +128,7 @@ j = c.batch
 
 %myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
     
-    maxNumCompThreads(8);
+    %maxNumCompThreads(8);
     
 %% 1) ---- Define Model Space ----
     % Set maximum number of cores to use
