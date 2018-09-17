@@ -103,7 +103,7 @@ tic; %clearvars -except testing iterations
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions')
-numCores = 19; 
+numCores = 8; 
 myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
     gcp %print cluster information
 % -- Define Possible Detectors --
@@ -1738,7 +1738,7 @@ end
 end
 
 % Create Name of file
-str = strcat('Table1Latex_',str1,'.txt');
+str = strcat('TablePhysPropLatex_',str1,'.txt');
 
 % Ammend final lines with caption of information (so we can identify the table)
 final{1,1} = '\end{tabular}}';
@@ -1752,7 +1752,7 @@ fprintf(fid, '%s\n', y{1,1});
 fclose(fid);
 
 fid = fopen(str,'at');
-fprintf(fid, '%s\n', y{:,1});
+fprintf(fid, '%s\n', y{2:end,1});
 %fclose(fid);
 
 fid = fopen(str,'at');
@@ -1762,82 +1762,86 @@ fclose(fid);
 fclose('all'); % Fully releases the file (otherwise Matlab won't for some reason)
     
 
-
+disp('Saved Table 1 (geophysical information)')
 
 %% (latex_Table 2) Format 'huang.tab2' into Latex format and write to .txt ----
 clear x r h y
 h = huang.tab2; 
-%{
+
 
 
 % Always put a '&' after so it goes to the next value
 for i = 1:size(h.rows,1)
 
-x(i).sU = latexUncSymAsym(h.U238(i,:),1);
+    if i == 1 || i == 6 
+        x(i).row = sprintf('%s &',strrep(h.rows{i},'_',' '));
+    else
+        x(i).row = sprintf('%s &',h.rows{i}); 
+    end
 
-x(i).sTh = latexUncSymAsym(h.Th232(i,:),1);
+    if i == 1 || i == 6 || i == 7
+    x(i).sU = latexUncSymAsym(h.U238(i,:),2);
+    x(i).sTh = latexUncSymAsym(h.Th232(i,:),2);
+    x(i).sTotal = latexUncSymAsym(h.total(i,:),2,1);
+    else
+        x(i).sU = latexUncSymAsym(h.U238(i,:),1);
+        x(i).sTh = latexUncSymAsym(h.Th232(i,:),1);
+        x(i).sTotal = latexUncSymAsym(h.total(i,:),1,1);
+    end
 
-x(i).sTotal = latex(UncSymAsym(h.total(i,:),1);
-    
 
-
-
-% Ammend latex format stuff onto front of strings
-if i == 1
-   x(i).front = '\multicolumn{1}{|c|}{\multirow{5}{*}{CC}}';
-elseif i == 2 || i == 3 || i == 4 || i == 5 || i == 7
-   x(i).front = '\multicolumn{1}{|c|}{} ';
-elseif i == 6
-   x(i).front = '\multicolumn{1}{|c|}{\multirow{2}{*}{OC}}';
-elseif i == 8
-   x(i).front = '\multicolumn{2}{|c}{DM} & '; 
-elseif i == 9
-   x(i).front = '\multicolumn{2}{|c}{EM} & ';   
-elseif i == 10
-   x(i).front = '\multicolumn{2}{|c}{BSE} & ';  
-end
-
-% Ammend latex format stuff onto end of strings
-if i == 1 || i == 2 || i == 3 || i == 4|| i == 6
-    x(i).end = '\\ \cline{2-13}'; 
-else 
+if i == size(h.rows,1)
     x(i).end = '\\ \hline';
+else
+    x(i).end = '\\';
 end
         
-   y{i,1} = strcat(x(i).front,x(i).row,x(i).rho,x(i).thick,x(i).mass.mass,x(i).abund.U,...
-       x(i).abund.Th,x(i).abund.K,x(i).mass.U,x(i).mass.Th,x(i).mass.K,...
-       x(i).hp,x(i).end); 
+   y{i,1} = strcat(x(i).row,x(i).sU,x(i).sTh,x(i).sTotal,x(i).end); 
 
 end
 
 
+% Create Name of file
+str = strcat('TableFluxLatex_',str1,'.txt');
+
+% Ammend Initial lines with detector
+z = MASTER.detector;
+start{1,1} = sprintf('\\multirow{2}{*}{} & \\multicolumn{3}{c}{%s} \\\\',z.Properties.RowNames{1});
+start{2,1} = sprintf('& \\multicolumn{3}{c}{%0.2f\\textdegree, %0.2f\\textdegree} \\\\ \\hline',z{1,2},z{1,1});
+start{3,1} = ' & S(U) & S(Th) & S(U+Th) \\'; 
+
+% Ammend final lines with caption of information (so we can identify the table)
+final{1,1} = '\end{tabular}}';
+z = strrep(str,'_',' '); z = strrep(z,'+','$+$'); 
+final{2,1} = sprintf('\\caption{%s}',z);
+
+
 
 % Write to text file
-str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s.txt',iter,MASTER.model,m,d,datestr(date,'ddmmmyyyy'));
-str1 = strcat('Table1Latex_',str1);
-
-% Write to text file
-fid = fopen(str1,'wt');
-fprintf(fid, '%s\n', y{1,1});
+fid = fopen(str,'wt');
+fprintf(fid,'%s\n',start{:,:}); 
 fclose(fid);
 
-for i = 2:10
-fid = fopen(str1,'at');
-fprintf(fid, '%s\n', y{i,1});
+fid = fopen(str,'at');
+fprintf(fid, '%s\n', y{:,1});
 %fclose(fid);
-end
+
+fid = fopen(str,'at');
+fprintf(fid,'%s\n',final{:,:});
+
 fclose(fid);    
 fclose('all'); % Fully releases the file (otherwise Matlab won't for some reason)
+disp('Saved Table 2 (flux)')
 
-%}
+
 %% 13) ---- Save data ---
     str = strcat(str1,'.mat');
-    save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','mantle','flux','cc','oc')
+    save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','mantle','flux','cc','oc','str','iter')
    % clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
     datestr(now)
 
 
-
+disp('Saved data: \n %s',str)
 
 
 
