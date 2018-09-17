@@ -103,8 +103,9 @@ tic; %clearvars -except testing iterations
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions')
-numCores = 8; 
-myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
+numCores = 7; 
+%myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
+
    % gcp %print cluster information
 % -- Define Possible Detectors --
     % Includes Name, longitude, latitude, depth (m), detector efficiency,
@@ -891,7 +892,7 @@ end % End of Monte Carlo loop
 MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
 %MASTER.memory = memory; %not available on a cluster
 MASTER.numCells = length(Litho1.latlon); 
-fprintf('Done \n')
+fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
 %% 7) ---- Mantle Monte Carlo ----
 
@@ -999,7 +1000,7 @@ tic
 end %end of "if calcMantleLayered == true"
 MASTER.MCRunTimeMantle = sprintf('%.1f minutes',toc/60);
 MASTER.EndTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-fprintf('Done \n')
+fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
 
 %% 
@@ -1125,7 +1126,7 @@ Note: This would preferrably be done directly in loop, but parfor is
 %}
 
 fprintf('Re-organizing Data...')
-
+tic
 
 % Mass of U, Th, K, and cell ('mass')(kg)
     n = {'U';'Th';'K';'mass'};% these need to be the same as "UC_out"
@@ -1187,7 +1188,7 @@ fprintf('Re-organizing Data...')
        end
     end  
      
-fprintf('Done \n')
+fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
     
 %% ---- Calculate Final Geoneutrino Flux ----
 
@@ -1484,11 +1485,24 @@ bse_sums = s1_cc_sums + s2_cc_sums + s3_cc_sums + UC_cc_sums + MC_cc_sums...
 bse.thick = 2891; %km
 bse.rho = bse_sums(:,1)./((4/3*pi*6378137^3)-(4/3*pi*(6378137-2891000)^3));
 
+% Continental Crust Stats
+crust_sums = s1_cc_sums + s2_cc_sums + s3_cc_sums + UC_cc_sums + MC_cc_sums...
+    + LC_cc_sums; 
+crust.thick = s1.thick(cc) + s2.thick(cc) + s3.thick(cc) + UC.thick(cc)...
+    + MC.thick(cc) + LC.thick(cc); 
+x = s1.mass.mass(cc,1) + s2.mass.mass(cc,1) + s3.mass.mass(cc,1) + UC.mass.mass(cc,1)...
+    + MC.mass.mass(cc,1) + LC.mass.mass(cc,1); 
+crust.rho = s1.rho(cc).*(s1.mass.mass(cc,1)./x) + s2.rho(cc).*(s2.mass.mass(cc,1)./x)...
+    + s3.rho(cc).*(s3.mass.mass(cc,1)./x) + UC.rho(cc).*(UC.mass.mass(cc,1)./x)...
+    + MC.rho(cc).*(MC.mass.mass(cc,1)./x) + LC.rho(cc).*(LC.mass.mass(cc,1)./x); 
+
+
+
 
 
 
 % Row Names
-huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
+huang.tab3.rows = {'Sed';'UC';'MC';'LC';'Bulk CC';'LM';'Sed';'C';'DM';'EM';'BSE'};
 
 
 % - Density (rho; g/cm3) (use 'find' to only get non-zero values as to not mess up stats)
@@ -1496,6 +1510,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
          stat(UC.rho(cc),m2);...
          stat(MC.rho(cc),m2);...
          stat(LC.rho(cc),m2);...
+         stat(crust.rho,m2);...
          stat(LM.rho(cc),m2);...
          stat(sed.oc.rho(find(sed.oc.rho)),m2);...
          stat(ocean.rho,m2);...
@@ -1509,6 +1524,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC.thick(cc),m2);...
         stat(MC.thick(cc),m2);...
         stat(LC.thick(cc),m2);...
+        stat(crust.thick,m2);...
         stat(LM.thick(cc),m2);...
         stat(sed.oc.rho,m2);...
         stat(ocean.thick,m2);...
@@ -1522,6 +1538,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,1),m2);...
         stat(MC_cc_sums(:,1),m2);...
         stat(LC_cc_sums(:,1),m2);...
+        stat(crust_sums(:,1),m2);...
         stat(LM_cc_sums(:,1),m2);...
         stat(sed_oc_sums(:,1),m2);...
         stat(ocean_sums(:,1),m2);...
@@ -1535,6 +1552,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,2)./UC_cc_sums(:,1),m2);...
         stat(MC_cc_sums(:,2)./MC_cc_sums(:,1),m1);...
         stat(LC_cc_sums(:,2)./LC_cc_sums(:,1),m1);...
+        stat(crust_sums(:,2)./crust_sums(:,1),m1);...
         stat(LM_cc_sums(:,2)./LM_cc_sums(:,1),m1);...
         stat(sed_oc_sums(:,2)./sed_oc_sums(:,1),m2);...
         stat(ocean_sums(:,2)./ocean_sums(:,1),m2);...
@@ -1548,6 +1566,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,3)./UC_cc_sums(:,1),m2);...
         stat(MC_cc_sums(:,3)./MC_cc_sums(:,1),m1);...
         stat(LC_cc_sums(:,3)./LC_cc_sums(:,1),m1);...
+        stat(crust_sums(:,3)./crust_sums(:,1),m1);...
         stat(LM_cc_sums(:,3)./LM_cc_sums(:,1),m1);...
         stat(sed_oc_sums(:,3)./sed_oc_sums(:,1),m2);...
         stat(ocean_sums(:,3)./ocean_sums(:,1),m2);...
@@ -1561,6 +1580,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,4)./UC_cc_sums(:,1),m2);...
         stat(MC_cc_sums(:,4)./MC_cc_sums(:,1),m1);...
         stat(LC_cc_sums(:,4)./LC_cc_sums(:,1),m1);...
+        stat(crust_sums(:,4)./crust_sums(:,1),m1);...
         stat(LM_cc_sums(:,4)./LM_cc_sums(:,1),m1);...
         stat(sed_oc_sums(:,4)./sed_oc_sums(:,1),m2);...
         stat(ocean_sums(:,4)./ocean_sums(:,1),m2);...
@@ -1574,6 +1594,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,2),m2);...
         stat(MC_cc_sums(:,2),m1);...
         stat(LC_cc_sums(:,2),m1);...
+        stat(crust_sums(:,2),m1);...
         stat(LM_cc_sums(:,2),m1);...
         stat(sed_oc_sums(:,2),m2);...
         stat(ocean_sums(:,2),m2);...
@@ -1587,6 +1608,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         stat(UC_cc_sums(:,3),m2);...
         stat(MC_cc_sums(:,3),m1);...
         stat(LC_cc_sums(:,3),m1);...
+        stat(crust_sums(:,3),m1);...
         stat(LM_cc_sums(:,3),m1);...
         stat(sed_oc_sums(:,3),m2);...
         stat(ocean_sums(:,3),m2);...
@@ -1596,8 +1618,11 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
     huang.tab3.mass.Th = x; 
 
 % - Mass of K (10^19 kg)
-    x = [stat(sed_sums(:,4),m2);stat(UC_cc_sums(:,4),m2);...
-        stat(MC_cc_sums(:,4),m1);stat(LC_cc_sums(:,4),m1);...
+    x = [stat(sed_sums(:,4),m2);...
+        stat(UC_cc_sums(:,4),m2);...
+        stat(MC_cc_sums(:,4),m1);...
+        stat(LC_cc_sums(:,4),m1);...
+        stat(crust_sums(:,4),m1);...
         stat(LM_cc_sums(:,4),m1);...
         stat(sed_oc_sums(:,4),m2);...
         stat(ocean_sums(:,4),m2);...
@@ -1607,8 +1632,11 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
     huang.tab3.mass.K = x; 
 
 % - Heat production (TW; 10^12 W)
-      x = [stat(sed_sums(:,6),m2);stat(UC_cc_sums(:,6),m2);...
-        stat(MC_cc_sums(:,6),m1);stat(LC_cc_sums(:,6),m1);...
+      x = [stat(sed_sums(:,6),m2);...
+        stat(UC_cc_sums(:,6),m2);...
+        stat(MC_cc_sums(:,6),m1);...
+        stat(LC_cc_sums(:,6),m1);...
+        stat(crust_sums(:,6),m1);...
         stat(LM_cc_sums(:,6),m1);...
         stat(sed_oc_sums(:,6),m2);...
         stat(ocean_sums(:,6),m2);...
@@ -1624,7 +1652,7 @@ huang.tab3.rows = {'Sed';'UC';'MC';'LC';'LM';'Sed';'C';'DM';'EM';'BSE'};
         huang.tab3.abund.Th, huang.tab3.abund.K, huang.tab3.mass.U, huang.tab3.mass.Th,...
         huang.tab3.mass.K, huang.tab3.hp); 
 
-   return 
+
    
 %% Write Model information to String
 % Re-order MASTER structure alphebetically
@@ -1662,6 +1690,16 @@ str1 = sprintf('Results_%1.1eIter_%s_%s_%s_%s_%s',iter,MASTER.model,m,d,e,datest
 MASTER.save.name = str1; MASTER.save.locate = pwd; 
 
 
+%% %% 13) ---- Save data ---
+    str = strcat(str1,'.mat');
+    save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','mantle','flux','cc','oc','str1','iter','simple2')
+   % clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
+    datestr(now)
+
+
+fprintf('Saved data: \n %s',str)
+
+
     
 %% (latex_Table 1) Format 'huang.tab3' into Latex format and write to .txt ----
 clear x r h y
@@ -1672,7 +1710,7 @@ h = huang.tab3;
 % Always put a '&' after so it goes to the next value
 for i = 1:size(h.rows,1)
     % Row Name
-if i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7
+if i == 1 || i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 7 || i == 8 %push it over 1 column
     x(i).row = sprintf(' & %s &',h.rows{i}); 
 else 
     x(i).row = ''; % for DM,EM, and BSE
@@ -1711,20 +1749,20 @@ x(i).hp = latexUncSymAsym(h.hp(i,:),1,1);
 % Ammend latex format stuff onto front of strings
 if i == 1
    x(i).front = '\multicolumn{1}{|c|}{\multirow{5}{*}{CC}}';
-elseif i == 2 || i == 3 || i == 4 || i == 5 || i == 7
+elseif i == 2 || i == 3 || i == 4 || i == 5 || i == 6 || i == 8
    x(i).front = '\multicolumn{1}{|c|}{} ';
-elseif i == 6
+elseif i == 7
    x(i).front = '\multicolumn{1}{|c|}{\multirow{2}{*}{OC}}';
-elseif i == 8
-   x(i).front = '\multicolumn{2}{|c}{DM} & '; 
 elseif i == 9
-   x(i).front = '\multicolumn{2}{|c}{EM} & ';   
+   x(i).front = '\multicolumn{2}{|c}{DM} & '; 
 elseif i == 10
+   x(i).front = '\multicolumn{2}{|c}{EM} & ';   
+elseif i == 11
    x(i).front = '\multicolumn{2}{|c}{BSE} & ';  
 end
 
 % Ammend latex format stuff onto end of strings
-if i == 1 || i == 2 || i == 3 || i == 4|| i == 6
+if i == 1 || i == 2 || i == 3 || i == 4|| i == 5 || i == 7
     x(i).end = '\\ \cline{2-13}'; 
 else 
     x(i).end = '\\ \hline';
@@ -1738,7 +1776,7 @@ end
 end
 
 % Create Name of file
-str = strcat('TablePhysPropLatex_',str1,'.txt');
+str = strcat('t1_PhysProp_',str1,'.txt');
 
 % Ammend final lines with caption of information (so we can identify the table)
 final{1,1} = '\end{tabular}}';
@@ -1802,7 +1840,7 @@ end
 
 
 % Create Name of file
-str = strcat('TableFluxLatex_',str1,'.txt');
+str = strcat('t2_flux_',str1,'.txt');
 
 % Ammend Initial lines with detector
 z = MASTER.detector;
@@ -1832,35 +1870,6 @@ fprintf(fid,'%s\n',final{:,:});
 fclose(fid);    
 fclose('all'); % Fully releases the file (otherwise Matlab won't for some reason)
 disp('Saved Table 2 (flux)')
-
-
-%% 13) ---- Save data ---
-    str = strcat(str1,'.mat');
-    save(str,'MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','mantle','flux','cc','oc','str','iter')
-   % clearvars('-except','MASTER','huang','Litho1','s1','s2','s3','UC','MC','LC','LM','flux','cc','oc'); 
-    datestr(now)
-
-
-disp('Saved data: \n %s',str)
-
-
-
-
-   end
-end
-
-
-return
-
-%% Figure 1 - Abundance in Crust
-%{
-figure
-MC.aU(MC.aU(:,1)<8e-8) = 0; 
-mapit(Litho1.latlon,MC.aU(:,1)*10^6)
-c.Label.String = 'aU (ppm)';
-title('Abundance of U in MC')
-%}
-%% Figure showing near-field crust
 
 
 %% (figure) Flux vs Distance
@@ -1893,136 +1902,59 @@ count.total.man = count.man.U238 + count.man.Th232;
 count.total.bse = count.bse.U238 + count.bse.Th232; 
 
 
+% Scale values to precisely match Monte Carlo results (values of "count"
+% slightly off due to how its summed)
+wt = huang.tab2.total(end,1)/sum(count.total.bse);
+
+
+
 
 % Plot Figure
 x = simple2.centers/1000; %(km)
 
 
-fig = figure;
+fig = figure('visible','off');
+set(gca, 'FontName', 'Times New Roman')
+title(sprintf('%s Distance vs Cumulative Flux',MASTER.detector.Properties.RowNames{1}))
+set(gca,'XScale','log') % x-axis = log scale
+
 
 % TNU Signal
-yyaxis left
-plot(x,cumsum(count.total.sed),':g'); hold on
-plot(x,cumsum(count.total.crust),'--','Color',[0.82031 0.41016 0.11719]);
-plot(x,cumsum(count.total.man),'-.r');
-plot(x,cumsum(count.total.bse),'-k');
-xlabel('Distance From Detector (km)')
-ylabel('Cumulative Flux (TNU)')
-set(gca,'XScale','log') % x-axis = log scale
-set(findall(gca, 'Type', 'Line'),'LineWidth',4); %line width
-set(gca,'FontSize',35) % axes font size
-set(gca,'XMinorTick','on','YMinorTick','on') %set ticks on
-axis([0 max(x) 0 inf])
-set(gca,'YColor','k') %set axis colors to black
-grid on
-h = legend('Sediment','Crust','Mantle','Total','Location','northwest');
-h.FontSize = 40;
+    yyaxis left
+    plot(x,cumsum(count.total.sed),':g'); hold on
+    plot(x,cumsum(count.total.crust),'--','Color',[0.82031 0.41016 0.11719]);
+    plot(x,cumsum(count.total.man),'-.r');
+    plot(x,cumsum(count.total.bse),'-k');
+    xlabel('Distance From Detector (km)')
+    ylabel('Cumulative Flux (TNU)')
+    set(findall(gca, 'Type', 'Line'),'LineWidth',4); %line width
+    set(gca,'FontSize',35) % axes font size
+    set(gca,'XMinorTick','on','YMinorTick','on') %set ticks on
+    axis([0 max(x) 0 inf])
+    set(gca,'YColor','k') %set axis colors to black
+    grid on
+    h = legend('Sediment','Crust','Mantle','Total','Location','northwest');
+    h.FontSize = 40;
 
 % Cumulative percent total signal
-yyaxis right
-plot(x,cumsum(count.total.bse)./sum(count.total.bse),'-k');
-set(gca,'YTickLabel',0:10:100) % set right y tick labels (0 - 100 percent)
-set(gca,'YColor','k') %set axis colors to black
+    yyaxis right
+    plot(x,cumsum(count.total.bse)./sum(count.total.bse),'-k');
+    set(gca,'YTickLabel',0:10:100) % set right y tick labels (0 - 100 percent)
+    set(gca,'YColor','k') %set axis colors to black
 
-ax = gca; 
+ 
+ 
+% Save Figure
+    set(gcf, 'PaperUnits', 'inches');
+    set(gcf, 'PaperPosition', [0 0 20 13]); % size of image (0 0 width length)  
+    str_png = strcat('f1_DistVsFlux_',str1,'.png');
+    str_eps = strcat('f1_DistVsFlux_',str1,'.eps');
+    print( str_eps,'-depsc');
+    print(str_png,'-dpng','-r300')
 
-
-pos(5)
-
-
-return
-
-%% (figure) Total vs Lithospheric Flux plot
-close all
-bor = [43.5, 11.8, 10.4]; %center, +, - (Agostini et al. 2015)
-kam = [34.9,6.0,5.4]; % (Watanabe 2016 presentation, Tohoku)(updated from Gando 2013)
-jin = [58.5, 2.34, 2.34]; % Sramek 2016, 4% uncertainty
-h13.bor = [31.9, 7.3, 5.8]; %H13 borexino
-h13.kam = [22.7,4.9,4.1]; %H13 kamland
-os.jin = [50.4,7.7,7.7]; % Sramek 2016 Jinping
-scott.bor = [31.1957, 6.4842, 5.3684]; %borexino
-scott.kam = [28.5360, 6.8118, 5.4991];  
-scott.jin = [49.2619, 10.8205, 9.9830]; % jinping
-
-biv.bor = [31.45, 8.95, 6.97]; 
-biv.kam = [27.4828, 7.8050, 6.0787]; 
-
-s.size = 200; 
-s.line = 2; 
-
-figure
-s1 = scatter(h13.bor(1),bor(1),s.size,'x','red','LineWidth', s.line); hold on; 
-s2 = scatter(scott.bor(1),bor(1)+1,s.size,'filled','square','red','LineWidth', s.line); 
-s3 = scatter(biv.bor(1),bor(1)-1,s.size,'square','red','LineWidth',s.line);
-
-scatter(h13.kam(1),kam(1),s.size,'x','blue','LineWidth', s.line); 
-scatter(scott.kam(1),kam(1)+1,s.size,'filled','square','blue','LineWidth', s.line);
-scatter(biv.kam(1),kam(1)-1,s.size,'square','blue','LineWidth',s.line);
-%scatter(os.jin(1),jin(1),150,'square','magenta'); 
-%scatter(scott.jin(1),jin(1),150,'square','filled','magenta'); 
-
-errorbar(h13.bor(1),bor(1),bor(3),bor(2),h13.bor(3),h13.bor(2),'red','LineWidth', s.line) 
-errorbar(scott.bor(1),bor(1)+1,bor(3),bor(2),scott.bor(3),scott.bor(2),'red','LineWidth', s.line) 
-errorbar(biv.bor(1),bor(1)-1,bor(3),bor(2),biv.bor(3),biv.bor(2),'red','LineWidth',s.line)
-
-errorbar(h13.kam(1),kam(1),kam(3),kam(2),h13.kam(3),h13.kam(2),'blue','LineWidth', s.line) 
-errorbar(scott.kam(1),kam(1)+1,kam(3),kam(2),scott.kam(3),scott.kam(2),'blue','LineWidth', s.line) 
-errorbar(biv.kam(1),kam(1)-1,kam(3),kam(2),biv.kam(3),biv.kam(2),'blue','LineWidth',s.line)
+disp('Saved Figure 1 (Distance vs Flux)')
 
 
-%errorbar(os.jin(1),jin(1),jin(3),jin(2),os.jin(3),os.jin(2),'blue') 
-%errorbar(scott.jin(1),jin(1),jin(3),jin(2),scott.jin(3),scott.jin(2),'blue') 
+   end
+end
 
-eqt1 = @(x) x+bor(1)-h13.bor(1); 
-eqt2 = @(x) x+bor(1)-scott.bor(1); 
-eqt3 = @(x) x+kam(1)-h13.kam(1);
-eqt4 = @(x) x+kam(1)-scott.kam(1);
-eqt5 = @(x) x+bor(1)-biv.bor(1); 
-eqt6 = @(x) x+kam(1)-biv.kam(1); 
-%eqt5 = @(x) x+jin(1)-os.jin(1);
-%eqt6 = @(x) x+jin(1)-scott.jin(1); 
-%fplot(eqt1,[0 40],'red','linestyle','--') 
-fplot(eqt2,[0 40],'red','linestyle','-') 
-%fplot(eqt3,[0 40],'blue','linestyle','--')
-fplot(eqt4,[0 40],'blue','linestyle','-')
-%fplot(eqt5,[0 40],'red','linestyle','-')
-%fplot(eqt6,[0 40],'blue','linestyle','-')
-
-%fplot(eqt5,[0 40],'magenta','linestyle','--')
-%fplot(eqt6,[0 40],'magenta','linestyle','-')
-
-
-
-grid on
-
-%YMinorTick[on]
-%axis equal
-axis([0 40 0 60]) 
-
-%title('Geoneutrino Signal at 2 detectors') 
-xlabel('Lithospheric Signal (TNU)') 
-ylabel('Total Signal (TNU)') 
-set(gca,'fontSize',20,'XMinorTick','on','yMinorTick','on') 
-[h,icons,plots,legend_text] = legend([s1, s2, s3],{'H13','This Study: H13 Method','This Study: Bivariate Method'},'location','southeast'); 
-%%
-%saveas(gcf,'Detector_GeoFlux','epsc')
-
-
-%% Least Squares fitting
-%h13.fit = fit([h13.kam(1);h13.bor(1)],[kam(1);bor(1)],'poly1');
-
-% -- Define function and options --
-    % - Linear Polynomial function y = mx+b (where m = 1)
-    fun = fittype({'x','1'}); 
-    
-    options = fitoptions('poly1');% Bisquare seeks to fit all data 
-    options.Lower = [1 -inf]; % constrain 'm' to 1 (don't mess with 'b')
-    options.Upper = [1 inf]; 
-
-    % - Fit data
-    h13.fit = fit([h13.kam(1);h13.bor(1)],[kam(1);bor(1)],fun,options);
-    h13.fit
-    % - Fit data with uncertainty (Monte Carlo)
-    %x = logdist(
-    
-    
