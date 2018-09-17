@@ -140,6 +140,8 @@ tic; %clearvars -except testing iterations
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions') %add path to function location
+numCores = 4; 
+myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
 
 
 % -- Define Possible Detectors --
@@ -728,9 +730,9 @@ tic
 fprintf('Lithosphere Monte Carlo...')
 nf_temp = nearField.logic; % Needed otherwise "nearField" becomes broadcast variable
 
-parfor n = 1:50; %length(Litho1.latlon) % n = a specific cell (out of 64,800)
+parfor n = 1:10000; %length(Litho1.latlon) % n = a specific cell (out of 64,800)
 %percent_done(n,length(Litho1.latlon),5)
-gcp
+
 temp_P = zeros(iter,1); %temporary pressure, reset every new cell (otherwise it will continue summing between cells
     if cc(n) == 1 % cc(n) = 1 is continental crust, 0 is oceanic crust
         %fprintf('cc %d \n',n)
@@ -931,7 +933,7 @@ fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
 
 
-save testing.mat UC_cc_sums
+save testing.mat UC_oc_sums
 disp('worked')
 
 
