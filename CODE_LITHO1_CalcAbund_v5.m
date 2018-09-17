@@ -140,8 +140,8 @@ tic; %clearvars -except testing iterations
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
 addpath('/lustre/swipp/code/Functions') %add path to function location
-numCores = 4; 
-myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
+%numCores = 4; 
+%myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
 
 
 % -- Define Possible Detectors --
