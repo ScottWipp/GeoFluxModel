@@ -931,9 +931,9 @@ MASTER.MCRunTime = sprintf('%.1f minutes',toc/60);
 MASTER.numCells = length(Litho1.latlon); 
 fprintf('Done (Time Elapsed: %.1f min) \n',toc/60)
 
+x = toc/60; 
 
-
-save testing.mat UC_oc_sums
+save testing.mat UC_oc_sums x
 disp('worked')
 
 
