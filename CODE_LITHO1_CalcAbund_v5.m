@@ -88,7 +88,7 @@
 
 
 
-for dets = 2:6 %1:6
+for dets = 2 %1:6
    for methods = 1 %1 = H13, 2 = Bivariate
        
     clearvars -except dets methods 
