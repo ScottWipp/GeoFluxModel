@@ -88,7 +88,7 @@
 
 
 
-for dets = 5 %1:6
+for dets = 5:6 %1:6
    for methods = 1 %1 = H13, 2 = Bivariate
        
     clearvars -except dets methods 
@@ -128,7 +128,7 @@ j = c.batch
 
 %myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
     
-   maxNumCompThreads(60);
+   maxNumCompThreads(100);
     
 %% 1) ---- Define Model Space ----
     % Set maximum number of cores to use
@@ -139,8 +139,8 @@ tic; %clearvars -except testing iterations
 %cd(fileparts(matlab.desktop.editor.getActiveFilename));% moves to current folder
 
 MASTER.StartTime = datestr(now,'mmmm dd, yyyy HH:MM AM');
-addpath('/lustre/swipp/code/Functions') %add path to function location
-numCores = 60; 
+%addpath('/lustre/swipp/code/Functions') %add path to function location
+numCores = 100; 
 myCluster=parcluster('local'); myCluster.NumWorkers=numCores; parpool(myCluster,numCores)
 
 
@@ -1720,6 +1720,7 @@ if MASTER.mantle.calc == 'true'
 else
     e = 'noCalcMantle';
 end
+
 
 
 sprintf('Time Elapsed: %.1f min |  Det: = %s | Meth = %s \n',toc/60, det.Properties.RowNames{1},MASTER.method)
